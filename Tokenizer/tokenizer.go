@@ -8,6 +8,7 @@ import (
 )
 
 func Tokenize(path string) string {
+	// Open File
 	file, err := os.Open(path)
 	if err != nil {
 		panic("file not able to be read")
