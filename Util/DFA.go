@@ -2,93 +2,115 @@ package main
 
 import "errors"
 
-type DFA struct {
+type Automata struct {
 	beginning    Node
 	nodes        map[rune]Node
-	finishStates map[rune]bool
 }
 
 type Node struct {
 	Name        rune
-	Transitions map[rune]Node
+	Transitions map[rune] []Node
 	Final       bool
 }
 
-func makeDFA(transitions [][3]rune, beginning rune, finishStates []rune) (*DFA, error) {
-	// Check for not valid input
-	if len(transitions) == 0 {
-		return nil, errors.New("No Transitions in Input")
-	}
+func makeAutomata(transitions [][3]rune, beginning rune, finishStates []rune) (*Automata) {
+	// Create new Automata 
+	Automata := new(Automata)
 
-	// Create new DFA and add the finish states 
-	DFA := new(DFA)
-	for _, state := range finishStates {
-		DFA.finishStates[state] = true
-	}
-
-	// Add the Transitions to the DFA
+	// Add the Transitions to the Automata
 	for _, newTransition := range transitions {
-		DFA.addTransition(newTransition)
+		Automata.addTransition(newTransition)
+	}
+
+
+	// Finish States Map
+	var finishMap map[rune]bool
+	for _, f := range finishStates{
+		finishMap[f] = true
+	}
+
+	// Iterate over the Nodes and make them Final
+	for name, isFinish := range finishMap{
+		if isFinish{
+			finishNode := Automata.nodes[name]
+			finishNode.Final = true	
+		}
 	}
 
 	// Add the beginning node and return
-	beginningNode, ok := DFA.nodes[beginning]
+	beginningNode, ok := Automata.nodes[beginning]
+
 	// If the beginning node hasnt been generated yet
 	if !ok {
 		beginningNode = *new(Node)
 		beginningNode.Name = beginning
-		DFA.nodes[beginning] = beginningNode
-		DFA.beginning = beginningNode
+		Automata.nodes[beginning] = beginningNode
 	}
 
-	DFA.beginning = beginningNode
-	return DFA, nil
+	Automata.beginning = beginningNode
+	return Automata
 }
 
-func (DFA DFA) addTransition(newTransition [3]rune) {
-	startNode, containsStart := DFA.nodes[newTransition[0]]
-	endNode, containsEnd := DFA.nodes[newTransition[2]]
+func (Automata Automata) addTransition(newTransition [3]rune) {
+	startNode, containsStart := Automata.nodes[newTransition[0]]
+	endNode, containsEnd := Automata.nodes[newTransition[2]]
 
 	if !containsStart {
-		newNode := new(Node)
-		newNode.Name = newTransition[0]
-		if DFA.finishStates[newNode.Name] {
-			newNode.Final = true
-		}
-		startNode = *newNode
+		startNode = *Automata.createNode(newTransition[0])
 	}
 
 	if !containsEnd {
-		newNode := new(Node)
-		newNode.Name = newTransition[2]
-		if DFA.finishStates[newNode.Name] {
-			newNode.Final = true
-		}
-		endNode = *newNode
+		endNode = *Automata.createNode(newTransition[2])
 	}
 
-	startNode.Transitions[newTransition[1]] = endNode
+	end, ok := startNode.Transitions[newTransition[1]]
+
+	if !ok{
+		end = []Node{endNode}
+	}else{
+		end = append(end, endNode)
+	}
+}
+
+func (Automata Automata) createNode (a rune) *Node{
+	newNode := new(Node)
+	newNode.Name = a
+
+	// Adds Node to Hashmap
+	Automata.nodes[a] = *newNode
+	return newNode
 }
 
 func (head Node) accepts(input string) bool {
 	if len(input) == 0 {
 		return head.Final
 	}
+	// Get first rune of input
 	nextLiteral := []rune(input)[0]
+
 	nextNode, err := head.getNext(nextLiteral)
 	if err != nil {
 		return false
 	}
 	// Slice the string without the first rune
-	return nextNode.accepts(input[1:])
+	for _, newNode := range nextNode{
+		if newNode.accepts(input[1:]){
+			return true
+		}
+	}
+	return false
 }
 
-func (head Node) getNext(a rune) (Node, error) {
+func (head Node) getNext(a rune) ([]Node, error) {
 	nextNode, ok := head.Transitions[a]
 	if !ok{
 		return nextNode, errors.New("No transition found")
 	}
 	return nextNode, nil
+}
+
+func (Automata Automata) getStart() Node{
+	return Automata.beginning
 }
 
 func (head Node) isFinal() bool {
