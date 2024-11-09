@@ -1,11 +1,18 @@
-package main
+package compiler
 
 import (
-	"Compilerbau/Tokenizer"
-	"fmt"
+	"compiler/util"
+
+
+	_ "compiler/tokenizer"
+	_ "errors"
+	_ "fmt"
 )
 
 func main() {
-	path := "code/Simple1.java"
-	fmt.Println(Tokenizer.Tokenize(path))
+	newNFA, err := util.MakeAutomata()
+	if (err != nil){
+		panic("Wrong Input")
+	}
+
 }
