@@ -1,30 +1,31 @@
-package main
+package util
 
 import "errors"
 
-type Automata struct {
-	beginning    Node
-	nodes        map[rune]Node
+type DFA struct {
+	beginning    DNode
+	dnodes        map[rune]DNode
 }
 
-type Node struct {
+// DNode = Determinitstic Node
+type DNode struct {
 	Name        rune
-	Transitions map[rune] []Node
+	Transitions map[rune] DNode
 	Final       bool
 }
 
-func makeAutomata(transitions [][3]rune, beginning rune, finishStates []rune) (*Automata) {
-	// Create new Automata 
-	Automata := new(Automata)
+func makeDFA(transitions [][3]rune, beginning rune, finishStates []rune) (*DFA) {
+	// Create new DFA 
+	DFA := new(DFA)
 
-	// Add the Transitions to the Automata
+	// Add the Transitions to the DFA
 	for _, newTransition := range transitions {
-		Automata.addTransition(newTransition)
+		DFA.addTransition(newTransition)
 	}
 
 
 	// Finish States Map
-	var finishMap map[rune]bool
+	finishMap := make(map[rune]bool)
 	for _, f := range finishStates{
 		finishMap[f] = true
 	}
@@ -32,56 +33,50 @@ func makeAutomata(transitions [][3]rune, beginning rune, finishStates []rune) (*
 	// Iterate over the Nodes and make them Final
 	for name, isFinish := range finishMap{
 		if isFinish{
-			finishNode := Automata.nodes[name]
+			finishNode := DFA.dnodes[name]
 			finishNode.Final = true	
 		}
 	}
 
 	// Add the beginning node and return
-	beginningNode, ok := Automata.nodes[beginning]
+	beginningNode, ok := DFA.dnodes[beginning]
 
 	// If the beginning node hasnt been generated yet
 	if !ok {
-		beginningNode = *new(Node)
+		beginningNode = *new(DNode)
 		beginningNode.Name = beginning
-		Automata.nodes[beginning] = beginningNode
+		DFA.dnodes[beginning] = beginningNode
 	}
 
-	Automata.beginning = beginningNode
-	return Automata
+	DFA.beginning = beginningNode
+	return DFA
 }
 
-func (Automata Automata) addTransition(newTransition [3]rune) {
-	startNode, containsStart := Automata.nodes[newTransition[0]]
-	endNode, containsEnd := Automata.nodes[newTransition[2]]
+func (DFA DFA) addTransition(newTransition [3]rune) {
+	startNode, containsStart := DFA.dnodes[newTransition[0]]
+	endNode, containsEnd := DFA.dnodes[newTransition[2]]
 
 	if !containsStart {
-		startNode = *Automata.createNode(newTransition[0])
+		startNode = *DFA.createNode(newTransition[0])
 	}
 
 	if !containsEnd {
-		endNode = *Automata.createNode(newTransition[2])
+		endNode = *DFA.createNode(newTransition[2])
 	}
 
-	end, ok := startNode.Transitions[newTransition[1]]
-
-	if !ok{
-		end = []Node{endNode}
-	}else{
-		end = append(end, endNode)
-	}
+	startNode.Transitions[newTransition[1]] = endNode
 }
 
-func (Automata Automata) createNode (a rune) *Node{
-	newNode := new(Node)
-	newNode.Name = a
+func (DFA DFA) createNode (name rune) *DNode{
+	newNode := new(DNode)
+	newNode.Name = name
 
-	// Adds Node to Hashmap
-	Automata.nodes[a] = *newNode
+	// Adds DNode to Hashmap
+	DFA.dnodes[name] = *newNode
 	return newNode
 }
 
-func (head Node) accepts(input string) bool {
+func (head DNode) accepts(input string) bool {
 	if len(input) == 0 {
 		return head.Final
 	}
@@ -93,15 +88,10 @@ func (head Node) accepts(input string) bool {
 		return false
 	}
 	// Slice the string without the first rune
-	for _, newNode := range nextNode{
-		if newNode.accepts(input[1:]){
-			return true
-		}
-	}
-	return false
+	return nextNode.accepts(input[1:])
 }
 
-func (head Node) getNext(a rune) ([]Node, error) {
+func (head DNode) getNext(a rune) (DNode, error) {
 	nextNode, ok := head.Transitions[a]
 	if !ok{
 		return nextNode, errors.New("No transition found")
@@ -109,14 +99,18 @@ func (head Node) getNext(a rune) ([]Node, error) {
 	return nextNode, nil
 }
 
-func (Automata Automata) getStart() Node{
-	return Automata.beginning
+func (DFA DFA) getStart() DNode{
+	return DFA.beginning
 }
 
-func (head Node) isFinal() bool {
-	return head.Final
+func (node DNode) isFinal() bool {
+	return node.Final
 }
 
-func (head Node) getName() rune {
-	return head.Name
+func (node DNode) getName() rune {
+	return node.Name
+}
+
+func (node DNode) getEdges() map[rune] DNode{
+	return node.Transitions
 }
