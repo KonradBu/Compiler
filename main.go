@@ -1,18 +1,14 @@
 package compiler
 
 import (
-	"compiler/util"
+	_"compiler/Util"
 
 
-	_ "compiler/tokenizer"
+	_ "compiler/Tokenizer"
 	_ "errors"
 	_ "fmt"
 )
 
 func main() {
-	newNFA, err := util.MakeAutomata()
-	if (err != nil){
-		panic("Wrong Input")
-	}
-
+	Test.Tester()
 }

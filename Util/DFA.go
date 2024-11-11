@@ -52,7 +52,7 @@ func makeDFA(transitions [][3]rune, beginning rune, finishStates []rune) (*DFA) 
 	return DFA
 }
 
-func (DFA DFA) addTransition(newTransition [3]rune) {
+func (DFA *DFA) addTransition(newTransition [3]rune) {
 	startNode, containsStart := DFA.dnodes[newTransition[0]]
 	endNode, containsEnd := DFA.dnodes[newTransition[2]]
 
@@ -67,7 +67,7 @@ func (DFA DFA) addTransition(newTransition [3]rune) {
 	startNode.Transitions[newTransition[1]] = endNode
 }
 
-func (DFA DFA) createNode (name rune) *DNode{
+func (DFA *DFA) createNode (name rune) *DNode{
 	newNode := new(DNode)
 	newNode.Name = name
 
@@ -76,7 +76,7 @@ func (DFA DFA) createNode (name rune) *DNode{
 	return newNode
 }
 
-func (head DNode) accepts(input string) bool {
+func (head *DNode) accepts(input string) bool {
 	if len(input) == 0 {
 		return head.Final
 	}
@@ -91,7 +91,7 @@ func (head DNode) accepts(input string) bool {
 	return nextNode.accepts(input[1:])
 }
 
-func (head DNode) getNext(a rune) (DNode, error) {
+func (head *DNode) getNext(a rune) (DNode, error) {
 	nextNode, ok := head.Transitions[a]
 	if !ok{
 		return nextNode, errors.New("No transition found")
@@ -99,18 +99,18 @@ func (head DNode) getNext(a rune) (DNode, error) {
 	return nextNode, nil
 }
 
-func (DFA DFA) getStart() DNode{
+func (DFA *DFA) getStart() DNode{
 	return DFA.beginning
 }
 
-func (node DNode) isFinal() bool {
+func (node *DNode) isFinal() bool {
 	return node.Final
 }
 
-func (node DNode) getName() rune {
+func (node *DNode) getName() rune {
 	return node.Name
 }
 
-func (node DNode) getEdges() map[rune] DNode{
+func (node *DNode) getEdges() map[rune] DNode{
 	return node.Transitions
 }

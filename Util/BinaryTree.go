@@ -47,7 +47,7 @@ func (head BinaryNode[T]) append (val T){
 	}
 }
 
-func (head BinaryNode[T]) appendTree (tree BinaryNode[T]){
+func (head *BinaryNode[T]) appendTree (tree BinaryNode[T]){
 	head.append(tree.value)
 	if(tree.left != nil){
 		head.appendTree(*tree.left)
@@ -57,7 +57,7 @@ func (head BinaryNode[T]) appendTree (tree BinaryNode[T]){
 	}
 }
 
-func (head BinaryNode[T]) delete (val T) BinaryNode[T]{
+func (head *BinaryNode[T]) delete (val T) BinaryNode[T]{
 	if val == head.value{
 		if(head.left != nil){
 			head.left.appendTree(*head.left)

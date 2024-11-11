@@ -55,7 +55,7 @@ func makeNFA(transitions [][3]rune, beginning rune, finishStates []rune) *NFA {
 	return NFA
 }
 
-func (NFA NFA) addTransition(newTransition [3]rune) {
+func (NFA *NFA) addTransition(newTransition [3]rune) {
 	startNode, containsStart := NFA.nnodes[newTransition[0]]
 	endNode, containsEnd := NFA.nnodes[newTransition[2]]
 
@@ -84,7 +84,7 @@ func (NFA NFA) addTransition(newTransition [3]rune) {
 	}
 }
 
-func (NFA NFA) createNode(a rune) *NNode {
+func (NFA *NFA) createNode(a rune) *NNode {
 	newNode := new(NNode)
 	newNode.Name = a
 
@@ -93,7 +93,7 @@ func (NFA NFA) createNode(a rune) *NNode {
 	return newNode
 }
 
-func (head NNode) accepts(input string) bool {
+func (head *NNode) accepts(input string) bool {
 	// Channel to check if the finish has been found already
 	found := make(chan bool)
 
@@ -107,41 +107,39 @@ func (head NNode) accepts(input string) bool {
 
 	// Create channel that waits for the end of the waitgroup
 	done := make(chan bool)
-	go func(){
+	go func() {
 		wg.Wait()
 		close(done)
 	}()
 
 	// Launch go routines from the head
-	// Signature: input string, channel for early exit, check for checking if 
+	// Signature: input string, channel for early exit, check for checking if
 	// we have checked the node + input before, waitgroup for concurrency
 	go head.acceptsRoutine(input, found, checked, &wg)
 
-
 	// Wait until either: Every go routine finishes, or: a finish was found
-	select{
-		case <- done:
-			return false
-		case <- found:
-			return true 
+	select {
+	case <-done:
+		return false
+	case <-found:
+		return true
 	}
 }
 
-func (head NNode) acceptsRoutine(input string, found chan bool, checked map[rune]map[string]bool, wg *sync.WaitGroup) {
-	
+func (head *NNode) acceptsRoutine(input string, found chan bool, checked map[rune]map[string]bool, wg *sync.WaitGroup) {
+
 	// Checks if channel exists or not, without blocking
 	// If a select has a default, then it doesnt wait until finish, but instead
 	// Continues on
-	select{
+	select {
 	case _, ok := <-found:
 		// Channel is found -> Finish was found
-		if !ok{
+		if !ok {
 			return
 		}
 	default:
 		// Do Nothing
 	}
-
 
 	// Check if the Input string is over
 	if len(input) == 0 {
@@ -155,10 +153,9 @@ func (head NNode) acceptsRoutine(input string, found chan bool, checked map[rune
 	if checked[head.Name][input] {
 		wg.Done()
 		return
-	}else{
+	} else {
 		checked[head.Name][input] = true
 	}
-
 
 	// Get first rune of input
 	nextRune := []rune(input)[0]
@@ -166,8 +163,8 @@ func (head NNode) acceptsRoutine(input string, found chan bool, checked map[rune
 	// Check if there is a transition
 	nextNodes, err := head.getNext(nextRune)
 	eTransition := head.EpsilonTransition
-	
-	if err != nil && len(eTransition) == 0{
+
+	if err != nil && len(eTransition) == 0 {
 		wg.Done()
 		return
 	}
@@ -180,7 +177,7 @@ func (head NNode) acceptsRoutine(input string, found chan bool, checked map[rune
 	}
 
 	// Startup new go routines for the epsilon closure
-	for _,  newNode:= range head.EpsilonTransition {
+	for _, newNode := range head.EpsilonTransition {
 		// Input the full string
 		go newNode.acceptsRoutine(input, found, checked, wg)
 		wg.Add(1)
@@ -189,7 +186,7 @@ func (head NNode) acceptsRoutine(input string, found chan bool, checked map[rune
 	wg.Done()
 }
 
-func (head NNode) getNext(a rune) ([]NNode, error) {
+func (head *NNode) getNext(a rune) ([]NNode, error) {
 	nextNode, ok := head.Transitions[a]
 	if !ok {
 		return nextNode, errors.New("No transition found")
@@ -197,22 +194,22 @@ func (head NNode) getNext(a rune) ([]NNode, error) {
 	return nextNode, nil
 }
 
-func (node NNode) epsilonClosure() []NNode{
+func (node *NNode) epsilonClosure() []NNode {
 	return node.EpsilonTransition
 }
 
-func (NFA NFA) getStart() NNode {
+func (NFA *NFA) getStart() NNode {
 	return NFA.beginning
 }
 
-func (node NNode) isFinal() bool {
+func (node *NNode) isFinal() bool {
 	return node.Final
 }
 
-func (node NNode) getName() rune {
+func (node *NNode) getName() rune {
 	return node.Name
 }
 
-func (node NNode) getEdges() map[rune] []NNode{
+func (node *NNode) getEdges() map[rune][]NNode {
 	return node.Transitions
 }
