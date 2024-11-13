@@ -4,17 +4,17 @@ import "errors"
 
 type DFA struct {
 	beginning    DNode
-	dnodes        map[rune]DNode
+	dnodes        map[string]DNode
 }
 
 // DNode = Determinitstic Node
 type DNode struct {
-	Name        rune
-	Transitions map[rune] DNode
+	Name        string
+	Transitions map[string] DNode
 	Final       bool
 }
 
-func makeDFA(transitions [][3]rune, beginning rune, finishStates []rune) (*DFA) {
+func MakeDFA(transitions [][3]string, beginning string, finishStates []string) (*DFA) {
 	// Create new DFA 
 	DFA := new(DFA)
 
@@ -23,9 +23,8 @@ func makeDFA(transitions [][3]rune, beginning rune, finishStates []rune) (*DFA) 
 		DFA.addTransition(newTransition)
 	}
 
-
 	// Finish States Map
-	finishMap := make(map[rune]bool)
+	finishMap := make(map[string]bool)
 	for _, f := range finishStates{
 		finishMap[f] = true
 	}
@@ -52,7 +51,7 @@ func makeDFA(transitions [][3]rune, beginning rune, finishStates []rune) (*DFA) 
 	return DFA
 }
 
-func (DFA *DFA) addTransition(newTransition [3]rune) {
+func (DFA *DFA) addTransition(newTransition [3]string) {
 	startNode, containsStart := DFA.dnodes[newTransition[0]]
 	endNode, containsEnd := DFA.dnodes[newTransition[2]]
 
@@ -67,7 +66,7 @@ func (DFA *DFA) addTransition(newTransition [3]rune) {
 	startNode.Transitions[newTransition[1]] = endNode
 }
 
-func (DFA *DFA) createNode (name rune) *DNode{
+func (DFA *DFA) createNode (name string) *DNode{
 	newNode := new(DNode)
 	newNode.Name = name
 
@@ -76,22 +75,22 @@ func (DFA *DFA) createNode (name rune) *DNode{
 	return newNode
 }
 
-func (head *DNode) accepts(input string) bool {
+func (head *DNode) accepts(input []string) bool {
 	if len(input) == 0 {
 		return head.Final
 	}
-	// Get first rune of input
-	nextLiteral := []rune(input)[0]
+	// Get first string of input
+	nextLiteral := input[0]
 
 	nextNode, err := head.getNext(nextLiteral)
 	if err != nil {
 		return false
 	}
-	// Slice the string without the first rune
+	// Slice the string without the first string
 	return nextNode.accepts(input[1:])
 }
 
-func (head *DNode) getNext(a rune) (DNode, error) {
+func (head *DNode) getNext(a string) (DNode, error) {
 	nextNode, ok := head.Transitions[a]
 	if !ok{
 		return nextNode, errors.New("No transition found")
@@ -107,10 +106,10 @@ func (node *DNode) isFinal() bool {
 	return node.Final
 }
 
-func (node *DNode) getName() rune {
+func (node *DNode) getName() string {
 	return node.Name
 }
 
-func (node *DNode) getEdges() map[rune] DNode{
+func (node *DNode) getEdges() map[string] DNode{
 	return node.Transitions
 }

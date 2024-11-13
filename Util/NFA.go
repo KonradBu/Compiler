@@ -7,18 +7,18 @@ import (
 
 type NFA struct {
 	beginning NNode
-	nnodes    map[rune]NNode
+	nnodes    map[string]NNode
 }
 
 type NNode struct {
-	Name              rune
-	Transitions       map[rune][]NNode
+	Name              string
+	Transitions       map[string][]NNode
 	EpsilonTransition []NNode
 	Final             bool
 }
 
 // Space: Epsilon transitions!
-func makeNFA(transitions [][3]rune, beginning rune, finishStates []rune) *NFA {
+func makeNFA(transitions [][3]string, beginning string, finishStates []string) *NFA {
 	// Create new NFA
 	NFA := new(NFA)
 
@@ -28,7 +28,7 @@ func makeNFA(transitions [][3]rune, beginning rune, finishStates []rune) *NFA {
 	}
 
 	// Finish States Map
-	finishMap := make(map[rune]bool)
+	finishMap := make(map[string]bool)
 	for _, f := range finishStates {
 		finishMap[f] = true
 	}
@@ -55,7 +55,7 @@ func makeNFA(transitions [][3]rune, beginning rune, finishStates []rune) *NFA {
 	return NFA
 }
 
-func (NFA *NFA) addTransition(newTransition [3]rune) {
+func (NFA *NFA) addTransition(newTransition [3]string) {
 	startNode, containsStart := NFA.nnodes[newTransition[0]]
 	endNode, containsEnd := NFA.nnodes[newTransition[2]]
 
@@ -68,7 +68,7 @@ func (NFA *NFA) addTransition(newTransition [3]rune) {
 	}
 
 	// Check for epsilon transitions
-	if newTransition[1] == ' ' {
+	if newTransition[1] == " " {
 		startNode.EpsilonTransition = append(startNode.EpsilonTransition, endNode)
 		return
 	}
@@ -84,7 +84,7 @@ func (NFA *NFA) addTransition(newTransition [3]rune) {
 	}
 }
 
-func (NFA *NFA) createNode(a rune) *NNode {
+func (NFA *NFA) createNode(a string) *NNode {
 	newNode := new(NNode)
 	newNode.Name = a
 
@@ -93,13 +93,13 @@ func (NFA *NFA) createNode(a rune) *NNode {
 	return newNode
 }
 
-func (head *NNode) accepts(input string) bool {
+func (head *NNode) accepts(input []string) bool {
 	// Channel to check if the finish has been found already
 	found := make(chan bool)
 
-	// Has this combination of Node and Input String been checked already?
-	// Map From Name of the State -> Another Map from a string to the bool value
-	checked := make(map[rune]map[string]bool)
+	// Has this combination of Node and Input Strings been checked already?
+	// Map From Name of the State -> Another Map from a string array to the bool value
+	checked := make(map[string]map[[]string]bool)
 
 	// Initialize wait group
 	var wg sync.WaitGroup
@@ -115,9 +115,10 @@ func (head *NNode) accepts(input string) bool {
 	// Launch go routines from the head
 	// Signature: input string, channel for early exit, check for checking if
 	// we have checked the node + input before, waitgroup for concurrency
+	//(Checking if every go routine has finished)
 	go head.acceptsRoutine(input, found, checked, &wg)
 
-	// Wait until either: Every go routine finishes, or: a finish was found
+	// Wait until either: Every go routine finishes, or: A finish was found
 	select {
 	case <-done:
 		return false
@@ -126,7 +127,7 @@ func (head *NNode) accepts(input string) bool {
 	}
 }
 
-func (head *NNode) acceptsRoutine(input string, found chan bool, checked map[rune]map[string]bool, wg *sync.WaitGroup) {
+func (head *NNode) acceptsRoutine(input []string, found chan bool, checked map[string]map[string]bool, wg *sync.WaitGroup) {
 
 	// Checks if channel exists or not, without blocking
 	// If a select has a default, then it doesnt wait until finish, but instead
@@ -150,6 +151,7 @@ func (head *NNode) acceptsRoutine(input string, found chan bool, checked map[run
 	}
 
 	// Check if we have been here before:
+	// Suprisingly hashing arrays compares content, not identity
 	if checked[head.Name][input] {
 		wg.Done()
 		return
@@ -157,8 +159,8 @@ func (head *NNode) acceptsRoutine(input string, found chan bool, checked map[run
 		checked[head.Name][input] = true
 	}
 
-	// Get first rune of input
-	nextRune := []rune(input)[0]
+	// Get first string of input
+	nextRune := input[0]
 
 	// Check if there is a transition
 	nextNodes, err := head.getNext(nextRune)
@@ -171,7 +173,7 @@ func (head *NNode) acceptsRoutine(input string, found chan bool, checked map[run
 
 	// Startup new go routines
 	for _, newNode := range nextNodes {
-		// Slice the string without the first rune
+		// Slice the string without the first string
 		go newNode.acceptsRoutine(input[1:], found, checked, wg)
 		wg.Add(1)
 	}
@@ -186,7 +188,23 @@ func (head *NNode) acceptsRoutine(input string, found chan bool, checked map[run
 	wg.Done()
 }
 
-func (head *NNode) getNext(a rune) ([]NNode, error) {
+func (NFA *NFA) toDFA() *DFA {
+	var transitions [][3]string
+	var finishState []string
+	for _, n := range NFA.nnodes {
+		if n.Final == true {
+			finishState = append(finishState, n.Name)
+		}
+	}
+
+	// Create new transitions
+
+	//
+
+	return MakeDFA(transitions, NFA.beginning.Name, finishState)
+}
+
+func (head *NNode) getNext(a string) ([]NNode, error) {
 	nextNode, ok := head.Transitions[a]
 	if !ok {
 		return nextNode, errors.New("No transition found")
@@ -206,10 +224,10 @@ func (node *NNode) isFinal() bool {
 	return node.Final
 }
 
-func (node *NNode) getName() rune {
+func (node *NNode) getName() string {
 	return node.Name
 }
 
-func (node *NNode) getEdges() map[rune][]NNode {
+func (node *NNode) getEdges() map[string][]NNode {
 	return node.Transitions
 }
