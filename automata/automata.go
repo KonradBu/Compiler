@@ -4,7 +4,6 @@ import (
 	"errors"
 	"sort"
 	"sync"
-	"sort"
 )
 
 type automata struct {
@@ -60,7 +59,7 @@ func MakeAutomata(transitions [][3]string, beginning string, finishStates []stri
 	return automata
 }
 
-func (automata *automata) AddTransition(newTransition [3]string) *node{
+func (automata *automata) AddTransition(newTransition [3]string) *node {
 	// newTransition [0] = Beginning Node; [1] = input; [2] = end node
 
 	startNode, containsStart := automata.nodes[newTransition[0]]
@@ -84,6 +83,23 @@ func (automata *automata) AddTransition(newTransition [3]string) *node{
 	}
 	return &endNode
 }
+
+// Only call if the automata is a DFA!!
+func (head *node) DFAaccepts(input []string) bool {
+	if len(input) == 0 {
+		return head.Final
+	}
+	// Get first string of input
+	nextLiteral := input[0]
+
+	nextNode := head.GetNext(nextLiteral)
+	if len(nextNode) == 0{
+		return false
+	} 
+	// Slice the string without the first string
+	return nextNode[0].DFAaccepts(input[1:])
+}
+
 
 func (head *node) Accepts(input []string) bool {
 	// Channel to check if the finish has been found already
@@ -180,36 +196,35 @@ func (head *node) acceptsRoutine(input []string, found chan bool, checked map[st
 	wg.Done()
 }
 
-
 // Pls dont have names of states that combine to other names of states (e.g. no states like: a,b,ab)
-func (NFA *automata) ToDFA() *automata{
+func (NFA *automata) ToDFA() *automata {
 	DFA := new(automata)
 	DFA.beginning = DFA.recursiveMerge(NFA.beginning)
 	return DFA
 }
 
 // Takes a node and recursivly merges all the states
-func (DFA *automata) recursiveMerge(head node) node{
+func (DFA *automata) recursiveMerge(head node) node {
 	// Epsilon Closure of itself
 	toBeMergedNodes := head.EpsilonClosure()
 
 	// Creates new node of itself + closure
 	returnNode, mergedNodes, err := DFA.makeCompositNode(toBeMergedNodes)
-	
-	// Have we created this node already? 
-	if err != nil{
+
+	// Have we created this node already?
+	if err != nil {
 		return *returnNode
 	}
 
 	// Goes through all the transitions of the set for every input
 	// All the nodes that have just been merged into 1
-	for _, mergedNode:= range mergedNodes{
+	for _, mergedNode := range mergedNodes {
 		// All the transitions of said node
-		for input, endNode := range mergedNode.Transitions{
-			// Add the transitions to the new node 
+		for input, endNode := range mergedNode.Transitions {
+			// Add the transitions to the new node
 			_, exists := returnNode.Transitions[input]
-			
-			if !exists{
+
+			if !exists {
 				returnNode.Transitions[input] = []node{}
 			}
 			// Add the transitions of the new node to the old node
@@ -219,52 +234,52 @@ func (DFA *automata) recursiveMerge(head node) node{
 
 	// Makes Final
 	returnNode.Final = false
-	for _, node := range mergedNodes{
-		if node.Final{
+	for _, node := range mergedNodes {
+		if node.Final {
 			returnNode.Final = true
 		}
 	}
 
-	// Recursivly calls itself on the newly created nodes  
-	for input, newNode := range returnNode.Transitions{
+	// Recursivly calls itself on the newly created nodes
+	for input, newNode := range returnNode.Transitions {
 		// The newnode has to be of length 1
-		returnNode.Transitions[input] = []node {DFA.recursiveMerge(newNode[0])}
+		returnNode.Transitions[input] = []node{DFA.recursiveMerge(newNode[0])}
 	}
-	
+
 	return *returnNode
 }
 
 // Creates a composit node out of a bunch of nodes and their epsilon closure
-func (NFA *automata) makeCompositNode(startNodes []node) (*node, []node, error){
+func (NFA *automata) makeCompositNode(startNodes []node) (*node, []node, error) {
 	var nodes []node
 	// Add the epsilon closure
-	for _, node := range startNodes{
+	for _, node := range startNodes {
 		// The epsilon closure contains itself
 		nodes = append(nodes, node.EpsilonClosure()...)
 	}
 
 	// Creates the composit node
 	var newNameParts []string
-	for _, node := range nodes{
+	for _, node := range nodes {
 		newNameParts = append(newNameParts, node.Name)
 	}
 	newName := compositNodeName(newNameParts)
-	
+
 	// Check if we have made this node already
 	alreadyExistingNode, existsAlready := NFA.nodes[newName]
-	if existsAlready{
+	if existsAlready {
 		return &alreadyExistingNode, nodes, errors.New("Node already exists")
 	}
 
 	return NFA.CreateNode(newName), nodes, nil
 }
 
-// Composits the names of a bunch of nodes so that they are always the same 
-func compositNodeName(names []string) string{
+// Composits the names of a bunch of nodes so that they are always the same
+func compositNodeName(names []string) string {
 	// So that the name of the States in not dependand on node order
 	sort.Strings(names)
 	newName := ""
-	for _, s := range names{
+	for _, s := range names {
 		newName += s
 	}
 	return newName
@@ -282,12 +297,12 @@ func (automata *automata) CreateNode(a string) *node {
 }
 
 // Gets all the nodes reachable from a specific node using only one input a and epsilon transitions
-func (head *node) GetNext(a string) ([]node) {
+func (head *node) GetNext(a string) []node {
 	nextNodes, ok := head.Transitions[a]
-	
-	// Append epsilon transitions 
+
+	// Append epsilon transitions
 	nextNodes = append(nextNodes, head.EpsilonClosure()...)
-	
+
 	// No Transitions for this input
 	if !ok {
 		return []node{}
@@ -296,35 +311,33 @@ func (head *node) GetNext(a string) ([]node) {
 	return nextNodes
 }
 
-
 func (inputNode *node) EpsilonClosure() []node {
 	// Create map for easy lookup
 	eTransitions := make(map[string]node)
-	
+
 	// Add all other nodes recursivly
 	inputNode.epsilonRecursive(eTransitions)
-	
-	// Make slice to return 
-	var closure []node 
-	for _, node := range eTransitions{
+
+	// Make slice to return
+	var closure []node
+	for _, node := range eTransitions {
 		closure = append(closure, node)
 	}
 	return closure
 }
 
-func (inputNode *node) epsilonRecursive(eTransitions map[string]node){
+func (inputNode *node) epsilonRecursive(eTransitions map[string]node) {
 	// Add itself
 	eTransitions[inputNode.Name] = *inputNode
 
 	// Add all the current epsilon transitions
-	for _, node := range inputNode.Transitions[" "]{
+	for _, node := range inputNode.Transitions[" "] {
 		_, checked := eTransitions[node.Name]
-		if !checked{
-			node.epsilonRecursive(eTransitions)	
+		if !checked {
+			node.epsilonRecursive(eTransitions)
 		}
 	}
 }
-
 
 func (automata *automata) GetStart() node {
 	return automata.beginning
