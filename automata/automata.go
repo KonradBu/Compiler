@@ -100,14 +100,14 @@ func (head *node) DFAaccepts(input []string) bool {
 	return nextNode[0].DFAaccepts(input[1:])
 }
 
-
+// Pls dont have any inputs, that can create each other if concatonated; e.g. aba, a, b
 func (head *node) Accepts(input []string) bool {
 	// Channel to check if the finish has been found already
 	found := make(chan bool)
 
 	// Has this combination of Node and Input Strings been checked already?
-	// Map From Name of the State -> Another Map from a string array to the bool value
-	checked := make(map[string]map[[]string]bool)
+	// Map From Name of the State -> Another Map from a concatonated together inputs to the bool value
+	checked := make(map[string]map[string]bool)
 
 	// Initialize wait group
 	var wg sync.WaitGroup
@@ -152,29 +152,34 @@ func (head *node) acceptsRoutine(input []string, found chan bool, checked map[st
 
 	// Check if the Input string is over
 	if len(input) == 0 {
-		if head.Final {
-			close(found)
+		// Can we reach a Finish using epsilon transitions?
+		for _, reachableNodes := range head.EpsilonClosure(){
+			if reachableNodes.Final{
+				close(found)
+			}
 		}
 		wg.Done()
 	}
 
 	// Check if we have been here before:
-	// Suprisingly hashing arrays compares content, not identity
-	if checked[head.Name][input] {
+	// Concatonate the input strings 
+	if checked[head.Name][concatonateStringArraySorted(input)] {
 		wg.Done()
 		return
 	} else {
-		checked[head.Name][input] = true
+		checked[head.Name][concatonateStringArraySorted(input)] = true
 	}
 
 	// Get first string of input
 	nextRune := input[0]
 
 	// Check if there is a transition
-	nextNodes, err := head.GetNext(nextRune)
-	eTransition := head.EpsilonTransition
+	nextNodes := head.GetNext(nextRune)
+	eTransitions := head.EpsilonClosure()
+	// Remove Itself
+	eTransitions = eTransitions[1:]
 
-	if err != nil && len(eTransition) == 0 {
+	if len(nextNodes) == 0 && len(eTransitions) == 0 {
 		wg.Done()
 		return
 	}
@@ -187,7 +192,7 @@ func (head *node) acceptsRoutine(input []string, found chan bool, checked map[st
 	}
 
 	// Startup new go routines for the epsilon closure
-	for _, newNode := range head.EpsilonTransition {
+	for _, newNode := range eTransitions {
 		// Input the full string
 		go newNode.acceptsRoutine(input, found, checked, wg)
 		wg.Add(1)
@@ -263,7 +268,7 @@ func (NFA *automata) makeCompositNode(startNodes []node) (*node, []node, error) 
 	for _, node := range nodes {
 		newNameParts = append(newNameParts, node.Name)
 	}
-	newName := compositNodeName(newNameParts)
+	newName := concatonateStringArraySorted(newNameParts)
 
 	// Check if we have made this node already
 	alreadyExistingNode, existsAlready := NFA.nodes[newName]
@@ -272,17 +277,6 @@ func (NFA *automata) makeCompositNode(startNodes []node) (*node, []node, error) 
 	}
 
 	return NFA.CreateNode(newName), nodes, nil
-}
-
-// Composits the names of a bunch of nodes so that they are always the same
-func compositNodeName(names []string) string {
-	// So that the name of the States in not dependand on node order
-	sort.Strings(names)
-	newName := ""
-	for _, s := range names {
-		newName += s
-	}
-	return newName
 }
 
 // Creates a node and adds it to the automata
@@ -337,6 +331,17 @@ func (inputNode *node) epsilonRecursive(eTransitions map[string]node) {
 			node.epsilonRecursive(eTransitions)
 		}
 	}
+}
+
+// Composits the names of a bunch of strings so that they are always the same
+func concatonateStringArraySorted(names []string) string {
+	// So that the name of the States in not dependand on node order
+	sort.Strings(names)
+	newName := ""
+	for _, s := range names {
+		newName += s
+	}
+	return newName
 }
 
 func (automata *automata) GetStart() node {
