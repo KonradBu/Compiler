@@ -1,12 +1,10 @@
 package compiler
 
 import (
-	_"compiler/Util"
-
-
-	_ "compiler/Tokenizer"
-	_ "errors"
-	_ "fmt"
+	_ "compiler/automata"
+	_ "compiler/tokenizer"
+	_ "compiler/unittest"
+	_ "compiler/util"
 )
 
 func main() {

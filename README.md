@@ -1,2 +1,7 @@
 ## Compiler
-Custom Compiler for the course compiler building at HHU Düsseldorf
+Compiler from minimized C# to Jasmin Assambly for compiler construction at HHU Düsseldorf
+By Konrad Burgi
+
+
+
+## How to run and compile
