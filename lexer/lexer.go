@@ -1,19 +1,41 @@
-package tokenizer
+package lexer
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"strconv"
 	"unicode"
 )
 
-func Tokenize(path string) string {
+type Token struct {
+	identifier  string
+	value any
+}
+
+var tokenChannel chan Token
+
+func GetNext() (*Token, error) {
+	// Wait until the channel with tokens has a value inside
+	select {
+	case newToken, ok := <-tokenChannel:
+		// If channel is close -> File is empty
+		if !ok {
+			return nil, errors.New("Lexer Error: File Ended")
+		}
+		return &newToken, nil
+	}
+}
+
+func Lex(path string) {
 	// Open File
 	file, err := os.Open(path)
 	if err != nil {
-		panic("file not able to be read")
+		panic("Lexer Error: File not able to be opened. Likely to be the wrong path")
 	}
 	defer file.Close()
+
+	tokenChannel = make(chan Token)
 
 	// Convert File into string
 	code := ""
@@ -57,18 +79,22 @@ func Tokenize(path string) string {
 	}
 
 	// Determine Identifier
-	returnCode := ""
 	lineNumber := 1
 	for _, token := range tokens {
 		identifier := ""
+		var tokenVal any		
+		
 		if isDigit(token[0]) {
-			returnCode += "INTEGER_LITERAL: " + token + "\n"
+			identifier = "INTEGER_LITERAL"
+			tokenVal = token
 			continue
 		}
+		
 		// Check for the different symbols
 		switch token {
 		case "\n":
-			identifier = "LINE " + strconv.Itoa(lineNumber)
+			identifier = "LINE "
+			tokenVal = strconv.Itoa(lineNumber)
 			lineNumber++
 		case "public":
 			identifier = "PUBLIC_SYMBOL"
@@ -107,11 +133,16 @@ func Tokenize(path string) string {
 		case "]":
 			identifier = "RIGHT_BRACKET"
 		default:
-			identifier = "IDENTIFIER: " + token
+			identifier = "IDENTIFIER"
+			tokenVal = token
 		}
-		returnCode += identifier + "\n"
+
+		// Make return token and add to channel
+		returnToken := new(Token)
+		returnToken.identifier = identifier
+		returnToken.value = tokenVal
+		tokenChannel <- *returnToken 
 	}
-	return returnCode
 }
 
 func isSymbol(r rune) bool {
