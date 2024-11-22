@@ -10,9 +10,9 @@ func parseLL1Table(table *parsetable, input []string) bool {
 		ntVal := table.nonterminals[nonterminal]
 		tVal := table.terminals[terminal]
 
-		if table.table[ntVal][tVal] != "" {
-			return true
+		if table.table[ntVal][tVal] == "" {
+			return false
 		}
-		return false
 	}
+	return true
 }
