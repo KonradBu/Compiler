@@ -8,6 +8,8 @@ By Konrad Burgi
 #### How to run and compile
 Build:
 go build main.go
+
+Run:
 ./main -compile [filepath]
 
 -liveness for variable liveness analysis

@@ -3,6 +3,7 @@ package lexer
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"unicode"
@@ -13,6 +14,7 @@ type Token struct {
 	Value      any
 }
 
+// Runs as go routine; called by the parser
 func GetNext(tokenChannel chan Token) (*Token, error) {
 	// Wait until the channel with tokens has a value inside
 	select {
@@ -26,6 +28,8 @@ func GetNext(tokenChannel chan Token) (*Token, error) {
 }
 
 func Lex(path string, tokenChannel chan Token) {
+	fmt.Println("Started Lexing...")
+	fmt.Println()
 	// Open File
 	file, err := os.Open(path)
 	if err != nil {
@@ -39,19 +43,34 @@ func Lex(path string, tokenChannel chan Token) {
 
 	lineNumber := 1
 
-	for scanner.Scan() {
-		// Save the line into "line"
-		line := ""
-		line += scanner.Text()
+	isMultiLineComment := false
 
+	for scanner.Scan() {
+		line := scanner.Text()
 		// Split String, removing whitespace etc.
 		tokens := []string{"\n"}
 		buffer := ""
 		isString := false
+		isSymbolString := false
 		isSingleLineComment := false
-		isMultiLineComment := false
+
 		for _, c := range line {
 			switch {
+			case isSingleLineComment:
+				continue
+
+			case isMultiLineComment:
+				buf := string(c)
+				if buf == "*" {
+					buffer = buf
+				} else if buf == "/" && buffer == "*" {
+					buffer = ""
+					isMultiLineComment = false
+				} else {
+					buffer = ""
+					continue
+				}
+
 			case c == '"':
 				if !isString {
 					isString = true
@@ -60,54 +79,66 @@ func Lex(path string, tokenChannel chan Token) {
 					tokens = append(tokens, buffer)
 					buffer = ""
 				}
-			
-			
+
 			case isString:
 				buffer = buffer + string(c)
-			
-			
-			// Attach symbol as is to the tokens, except if it can be 
-			// concatonated with the symbol before -> check for comment begin
-			case isSymbol(c):
-				if buffer != "" {
-					tmparr := []rune(buffer)[0]
-					
-					// The string in the buffer is not a symbol
-					if !isSymbol(tmparr){
-						tokens = append(tokens, buffer)
-						buffer = ""
-					}else{
-						// Is symbol -> Can be concatonated to // /* etc.
-						concSymbol := concatonateSymbols(tmparr, c)
-						// Symbols cannot be concatonated
-						if concSymbol == ""{
-							tokens = append(tokens, buffer)
-							buffer = ""
-						}else{
-							// Symbols can be concatonated -> check for if comment
-							if concSymbol == "//"{
-								isSingleLineComment = true
-							}
-							if concSymbol == "/*"{
-								isMultiLineComment = true
-							}
-						}
+
+			case isSymbolString:
+				if !isSymbol(c) {
+					tokens = append(tokens, buffer)
+					buffer = ""
+					if (!unicode.IsSpace(c)){
+						buffer = string(c)
 					}
+					isSymbolString = false
+					continue
 				}
-				tokens = append(tokens, string(c))
-			
-			
-			
+
+				// Is symbol -> Can be concatonated to // /* etc.
+				concSymbol := concatonateSymbols([]rune(buffer)[0], c)
+
+				// Symbols cannot be concatonated
+				if concSymbol == "" {
+					tokens = append(tokens, buffer)
+					buffer = string(c)
+					continue
+				}
+
+				// Symbols can be concatonated -> check for if comment
+				isSymbolString = false
+				if concSymbol == "//" {
+					isSingleLineComment = true
+				} else if concSymbol == "/*" {
+					isMultiLineComment = true
+				} else {
+					tokens = append(tokens, concSymbol)
+					buffer = ""
+					continue
+				}
+
+				// If this line is reached a comment has started
+				buffer = ""
+
+			case isSymbol(c):
+				if buffer != ""{
+					tokens = append(tokens, buffer)
+				}
+				isSymbolString = true
+				buffer = string(c)
+
 			case unicode.IsSpace(c):
 				if buffer != "" {
 					tokens = append(tokens, buffer)
 				}
 				buffer = ""
-			
-			
+
 			default:
 				buffer = buffer + string(c)
 			}
+		}
+
+		if buffer != "" {
+			tokens = append(tokens, buffer)
 		}
 
 		// Determine Identifier
@@ -116,30 +147,25 @@ func Lex(path string, tokenChannel chan Token) {
 			var tokenVal any
 
 			tmpdigit, intConvErr := strconv.Atoi(token)
-			
+
 			// If could be converted to int
 			if intConvErr == nil {
-				identifier = "INTEGER_LITERAL"
-				tokenVal = tmpdigit
+				sendToken("INTEGER_LITERAL", tmpdigit, tokenChannel)
 				continue
 			}
 
 			tmpbool, boolConvErr := strconv.ParseBool(token)
+
 			// If could be converted to bool
 			if boolConvErr == nil {
-				identifier = "INTEGER_LITERAL"
-				tokenVal = tmpbool
-				continue
-			}
-
-			if isMultiLineComment || isSingleLineComment{
+				sendToken("BOOL_LITERAL", tmpbool, tokenChannel)
 				continue
 			}
 
 			// Check for the different symbols
 			switch token {
 			case "\n":
-				identifier = "LINE "
+				identifier = "LINE"
 				tokenVal = strconv.Itoa(lineNumber)
 				lineNumber++
 			case "namespace":
@@ -201,23 +227,31 @@ func Lex(path string, tokenChannel chan Token) {
 			case "]":
 				identifier = "RIGHT_BRACKET"
 			default:
-				identifier = "IDENTIFIER"
+				identifier = "NAME"
 				tokenVal = token
 			}
-			isSingleLineComment = false
-
-			// Make return token and add to channel
-			returnToken := new(Token)
-			returnToken.Identifier = identifier
-			returnToken.Value = tokenVal
-			tokenChannel <- *returnToken
+			if isMultiLineComment || isSingleLineComment {
+				if isSingleLineComment {
+				}
+				isSingleLineComment = false
+			} else {
+				sendToken(identifier, tokenVal, tokenChannel)
+			}
 		}
 	}
 	close(tokenChannel)
 }
 
+func sendToken(identifier string, value any, channel chan Token){
+	// Make return token and add to channel
+	returnToken := new(Token)
+	returnToken.Identifier = identifier
+	returnToken.Value = value
+	channel <- *returnToken
+}
+
 func isSymbol(r rune) bool {
-	symbols := []rune{'\n', ';', '.', '-', '+', '*', '>', '<', '=', '{', '}', '(', ')', '[', ']', '|', ',', '/'}
+	symbols := []rune{';', '.', '-', '+', '*', '>', '<', '=', '{', '}', '(', ')', '[', ']', '|', ',', '/'}
 	for _, symbol := range symbols {
 		if r == symbol {
 			return true
@@ -226,24 +260,24 @@ func isSymbol(r rune) bool {
 	return false
 }
 
-func concatonateSymbols(s1 rune, s2 rune) string{
-	if s2 == '='{
-		if s1 == '>' ||s1 == '<' || s1 == '!' || s1 == '='{
+func concatonateSymbols(s1 rune, s2 rune) string {
+	if s2 == '=' {
+		if s1 == '>' || s1 == '<' || s1 == '!' || s1 == '=' {
 			return string(s1) + string(s2)
 		}
 	}
-	if s1 == '/'{
-		if s2 == '/' || s2 == '*'{
+	if s1 == '/' {
+		if s2 == '/' || s2 == '*' {
 			return string(s1) + string(s2)
 		}
 	}
-	if s1 == '*' && s2 == '/'{
+	if s1 == '*' && s2 == '/' {
 		return "*/"
 	}
-	if s1 == '|' && s2 == '|'{
+	if s1 == '|' && s2 == '|' {
 		return "||"
 	}
-	if s1 == '&' && s2 == '&'{
+	if s1 == '&' && s2 == '&' {
 		return "&&"
 	}
 	return ""
