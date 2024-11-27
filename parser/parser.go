@@ -10,15 +10,25 @@ func Parse(path string) {
 	go lexer.Lex(path, tokenChannel)
 	for true {
 		token, err := lexer.GetNext(tokenChannel)
-		if err != nil{
+		if err != nil {
 			break
 		}
-		fmt.Print(token.Identifier + " ")
-		if token.Value != nil{
-			fmt.Print(token.Value)
+
+		linecount := 0
+		switch token.Identifier {
+		case "LINE":
+			linecount = int(token.Value.(int))
+		case "NAMESPACE":
+			//
+		case "STATCIC":
+			//
+		default:
+			fmt.Print(token.Identifier + " ")
+			if token.Value != nil {
+				fmt.Print(token.Value)
+			}
+			fmt.Println(" " + string(linecount))
 		}
-		fmt.Println()
 		// Do something with the token
-	
 	}
 }

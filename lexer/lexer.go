@@ -132,6 +132,10 @@ func Lex(path string, tokenChannel chan Token) {
 				continue
 			}
 
+			if isMultiLineComment || isSingleLineComment{
+				continue
+			}
+
 			// Check for the different symbols
 			switch token {
 			case "\n":

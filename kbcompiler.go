@@ -4,6 +4,7 @@ import (
 	_ "compiler/automata"
 	_ "compiler/lexer"
 	"compiler/parser"
+	"fmt"
 
 	//compiler/util"
 	"flag"
@@ -12,18 +13,30 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		panic("Please provide a code path and no other inputs")
+		fmt.Println("Please provide a code path and a flag")
+		return
 	}
-	path := os.Args[2]
+
 	compile := flag.Bool("compile", false, "Compile the code")
 	liveness := flag.Bool("liveness", false, "Start liveness analysis")
 	constants := flag.Bool("constants", false, "Start constant propagation analysis")
 
 	flag.Parse()
 
-	if !*compile && !*liveness && !*constants {
-		panic("Please specify what the program should do. Use -help if needed")
+	var path string
+
+	if len(os.Args) < 4 {
+		path = os.Args[2]
+	}else{
+		fmt.Println("No provided path")
+		return
 	}
+
+	if !*compile && !*liveness && !*constants {
+		fmt.Println("Please specify what the program should do. Use -help if needed")
+		return
+	}
+
 	if *compile {
 		// Send code to tokenizer
 		parser.Parse(path)
