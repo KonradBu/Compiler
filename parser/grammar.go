@@ -21,8 +21,10 @@ func makeStandardGrammar() *Grammar{
 	return newGrammar
 }
 
+/*
 func (grammar *Grammar) addRule(rules []Rule){
 	for _, r := range rules{
 		
-	}
+		}
 }
+*/

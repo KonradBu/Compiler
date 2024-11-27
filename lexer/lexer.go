@@ -9,17 +9,15 @@ import (
 )
 
 type Token struct {
-	identifier  string
-	value any
+	Identifier string
+	Value      any
 }
 
-var tokenChannel chan Token
-
-func GetNext() (*Token, error) {
+func GetNext(tokenChannel chan Token) (*Token, error) {
 	// Wait until the channel with tokens has a value inside
 	select {
 	case newToken, ok := <-tokenChannel:
-		// If channel is close -> File is empty
+		// If channel is closed -> File is done
 		if !ok {
 			return nil, errors.New("Lexer Error: File Ended")
 		}
@@ -27,29 +25,31 @@ func GetNext() (*Token, error) {
 	}
 }
 
-func Lex(path string) {
+func Lex(path string, tokenChannel chan Token) {
 	// Open File
 	file, err := os.Open(path)
 	if err != nil {
-		panic("Lexer Error: File not able to be opened. Likely to be the wrong path")
+		panic("Lexer Error: File not able to be opened. Likely to be the wrong path. Path given: " + path)
 	}
 	defer file.Close()
-
-	tokenChannel = make(chan Token)
 
 	// Scan over the file
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 
+	lineNumber := 1
+
 	for scanner.Scan() {
 		// Save the line into "line"
 		line := ""
-		line += scanner.Text() + "\n"
-		
-		// Convert String into string array
+		line += scanner.Text()
+
+		// Split String, removing whitespace etc.
 		tokens := []string{"\n"}
 		buffer := ""
 		isString := false
+		isSingleLineComment := false
+		isMultiLineComment := false
 		for _, c := range line {
 			switch {
 			case c == '"':
@@ -60,34 +60,75 @@ func Lex(path string) {
 					tokens = append(tokens, buffer)
 					buffer = ""
 				}
+			
+			
 			case isString:
 				buffer = buffer + string(c)
+			
+			
+			// Attach symbol as is to the tokens, except if it can be 
+			// concatonated with the symbol before -> check for comment begin
 			case isSymbol(c):
 				if buffer != "" {
-					tokens = append(tokens, buffer)
-					buffer = ""
+					tmparr := []rune(buffer)[0]
+					
+					// The string in the buffer is not a symbol
+					if !isSymbol(tmparr){
+						tokens = append(tokens, buffer)
+						buffer = ""
+					}else{
+						// Is symbol -> Can be concatonated to // /* etc.
+						concSymbol := concatonateSymbols(tmparr, c)
+						// Symbols cannot be concatonated
+						if concSymbol == ""{
+							tokens = append(tokens, buffer)
+							buffer = ""
+						}else{
+							// Symbols can be concatonated -> check for if comment
+							if concSymbol == "//"{
+								isSingleLineComment = true
+							}
+							if concSymbol == "/*"{
+								isMultiLineComment = true
+							}
+						}
+					}
 				}
 				tokens = append(tokens, string(c))
-				continue
+			
+			
+			
 			case unicode.IsSpace(c):
 				if buffer != "" {
 					tokens = append(tokens, buffer)
 				}
 				buffer = ""
+			
+			
 			default:
 				buffer = buffer + string(c)
 			}
 		}
 
 		// Determine Identifier
-		lineNumber := 1
 		for _, token := range tokens {
 			identifier := ""
-			var tokenVal any		
+			var tokenVal any
 
-			if isDigit(token[0]) {
+			tmpdigit, intConvErr := strconv.Atoi(token)
+			
+			// If could be converted to int
+			if intConvErr == nil {
 				identifier = "INTEGER_LITERAL"
-				tokenVal = token
+				tokenVal = tmpdigit
+				continue
+			}
+
+			tmpbool, boolConvErr := strconv.ParseBool(token)
+			// If could be converted to bool
+			if boolConvErr == nil {
+				identifier = "INTEGER_LITERAL"
+				tokenVal = tmpbool
 				continue
 			}
 
@@ -97,22 +138,40 @@ func Lex(path string) {
 				identifier = "LINE "
 				tokenVal = strconv.Itoa(lineNumber)
 				lineNumber++
-			case "public":
-				identifier = "PUBLIC_SYMBOL"
+			case "namespace":
+				identifier = "NAMESPACE"
+			case "using":
+				identifier = "USING"
 			case "class":
-				identifier = "CLASS_SYMBOL"
+				identifier = "CLASS"
 			case "void":
-				identifier = "VOID_SYMBOL"
+				identifier = "VOID"
 			case "static":
-				identifier = "STATIC_SYMBOL"
+				identifier = "STATIC"
+			case "Main":
+				identifier = "MAIN"
 			case "int":
-				identifier = "INT_SYMBOL"
+				identifier = "INT"
+			case "bool":
+				identifier = "BOOL"
+			case "string":
+				identifier = "STRING"
+			case "double":
+				identifier = "DOUBLE"
+			case "if":
+				identifier = "IF"
+			case "else":
+				identifier = "ELSE"
+			case "while":
+				identifier = "WHILE"
+			case "return":
+				identifier = "RETURN"
 			case ".":
 				identifier = "DOT"
 			case ",":
 				identifier = "COMMA"
 			case "|":
-				identifier = "OR_SYMBOL"
+				identifier = "OR"
 			case "=":
 				identifier = "EQUALS"
 			case ">":
@@ -141,18 +200,20 @@ func Lex(path string) {
 				identifier = "IDENTIFIER"
 				tokenVal = token
 			}
+			isSingleLineComment = false
 
 			// Make return token and add to channel
 			returnToken := new(Token)
-			returnToken.identifier = identifier
-			returnToken.value = tokenVal
-			tokenChannel <- *returnToken 
+			returnToken.Identifier = identifier
+			returnToken.Value = tokenVal
+			tokenChannel <- *returnToken
 		}
-	}	
+	}
+	close(tokenChannel)
 }
 
 func isSymbol(r rune) bool {
-	symbols := []rune{'\n', ';', '.', '-', '+', '*', '>', '<', '=', '{', '}', '(', ')', '[', ']', '|', ','}
+	symbols := []rune{'\n', ';', '.', '-', '+', '*', '>', '<', '=', '{', '}', '(', ')', '[', ']', '|', ',', '/'}
 	for _, symbol := range symbols {
 		if r == symbol {
 			return true
@@ -161,9 +222,25 @@ func isSymbol(r rune) bool {
 	return false
 }
 
-func isDigit(b byte) bool {
-	if b-48 >= 0 && b-48 <= 9 {
-		return true
+func concatonateSymbols(s1 rune, s2 rune) string{
+	if s2 == '='{
+		if s1 == '>' ||s1 == '<' || s1 == '!' || s1 == '='{
+			return string(s1) + string(s2)
+		}
 	}
-	return false
+	if s1 == '/'{
+		if s2 == '/' || s2 == '*'{
+			return string(s1) + string(s2)
+		}
+	}
+	if s1 == '*' && s2 == '/'{
+		return "*/"
+	}
+	if s1 == '|' && s2 == '|'{
+		return "||"
+	}
+	if s1 == '&' && s2 == '&'{
+		return "&&"
+	}
+	return ""
 }

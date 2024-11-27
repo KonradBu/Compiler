@@ -2,8 +2,8 @@ package main
 
 import (
 	_ "compiler/automata"
-	"compiler/parser"
 	_ "compiler/lexer"
+	"compiler/parser"
 
 	//compiler/util"
 	"flag"
@@ -14,7 +14,7 @@ func main() {
 	if len(os.Args) < 2 {
 		panic("Please provide a code path and no other inputs")
 	}
-	path := os.Args[1]
+	path := os.Args[2]
 	compile := flag.Bool("compile", false, "Compile the code")
 	liveness := flag.Bool("liveness", false, "Start liveness analysis")
 	constants := flag.Bool("constants", false, "Start constant propagation analysis")

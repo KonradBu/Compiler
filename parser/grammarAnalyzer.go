@@ -30,10 +30,12 @@ func (grammar *Grammar) recursiveNullable(nullableMap map[string]bool, nullable 
 	}
 }
 
-func (grammar *Grammar)recursiveSearch(inputMap map[string]any,closure func(*Grammar)()(bool)){
+/*func (grammar *Grammar)recursiveSearch(inputMap map[string]any,closure func(*Grammar)()(bool)){
 
 }
+*/
 
+/*
 func (grammar *Grammar) GetFirst(nullable []string) map[string][]string{
 	var resMap map[string][]string
 	for _, nt := range grammar.nonTerminals{
@@ -42,6 +44,7 @@ func (grammar *Grammar) GetFirst(nullable []string) map[string][]string{
 		grammar.recursiveFirst(nt, first, firstMap)
 		resMap[nt] = first
 	}
+	
 }
 
 func (grammar *Grammar)recursiveFirst(nt string, first []string, firstMap map[string]bool){
@@ -51,3 +54,4 @@ func (grammar *Grammar)recursiveFirst(nt string, first []string, firstMap map[st
 func (grammar *Grammar) GetFollow()map[string][]string{
 
 }
+*/
