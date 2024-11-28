@@ -240,6 +240,8 @@ func Lex(path string, tokenChannel chan Token) {
 		}
 	}
 	close(tokenChannel)
+	fmt.Println()
+	fmt.Println("Lexer finished")
 }
 
 func sendToken(identifier string, value any, channel chan Token){
