@@ -1,5 +1,6 @@
 package parser
 
+/*
 func (grammar *Grammar) GetNullable() []string{
 	var nullable []string
 	nullableMap := make(map[string]bool)
@@ -46,10 +47,13 @@ func (grammar *Grammar) GetNullable() []string{
 	-> Fals terminal enthält -> nicht nullable
 
 	-> geht recursivly durch alle non Terminals in den start regeln durch 
-	*/
+	
 
 	// add from channel
 }
+
+
+
 
 // Does not check unnreachables!!
 func (grammar *Grammar) grammarSearch(start string, checked map[string]bool, results chan string, search func(channel chan any)){
@@ -71,25 +75,23 @@ func (grammar *Grammar) grammarSearch(start string, checked map[string]bool, res
 
 
 				/*if r.production == 
-				go grammar.nullableRecursive(checked, )*/
+				go grammar.nullableRecursive(checked, )
 			}
 		} 
 	}
 }
-
-
-/* Nullable:
-	Geht durch jedes nt und checkt ob es 
-
-
-
-/*func (grammar *Grammar)recursiveSearch(inputMap map[string]any,closure func(*Grammar)()(bool)){
-
-}
 */
 
+func (grammar *Grammar) SetNullable(){
+	
+}
+
+
+
+
+
 // Requires NULLABLE to be done!
-func (grammar *Grammar) GetFirst(){
+func (grammar *Grammar) SetFirst(){
 	firstMap := *new(map[string][]string)
 	nonTerminalMap := grammar.makeNonTerminalMap()
 	grammar.recursiveFirst(grammar.start, firstMap, nonTerminalMap)
@@ -153,18 +155,17 @@ func (grammar *Grammar)recursiveFirst(nt string, firstMap map[string][]string, n
 
 
 // Requires FIRST to be done
-func (grammar *Grammar) GetFollow(){
-	followMap := *new(map[string][]string)
+func (grammar *Grammar) SetFollow(){
+	followMap := make(map[string][]string)
 	followMap[grammar.start] = []string{"$"}
-	nonTerminalMap := grammar.makeNonTerminalMap()
 	for _, nt := range grammar.nonTerminals{
-		grammar.calcFollow(nt, followMap, nonTerminalMap)
+		grammar.calcFollow(nt, followMap)
 	}
 	grammar.follow = followMap
 }
 
 
-func (grammar *Grammar)calcFollow(nt string, followMap map[string][]string, nonTerminal map[string][]Rule){
+func (grammar *Grammar)calcFollow(nt string, followMap map[string][]string){
 	followMap[nt] = []string{}
 	// For every rule associated with the starting non terminal...
 	for _, rule := range grammar.rules{
@@ -195,7 +196,7 @@ func (grammar *Grammar)calcFollow(nt string, followMap map[string][]string, nonT
 
 // Makes a map from non terminal -> all the possible productions
 func (grammar *Grammar) makeNonTerminalMap() map[string][]Rule{
-	nonTerminalMap := *new(map[string][]Rule)
+	nonTerminalMap := make(map[string][]Rule)
 	for _, r := range grammar.rules{
 		_, ok := nonTerminalMap[r.nonTerminal]
 		if !ok{
