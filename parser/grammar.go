@@ -5,6 +5,9 @@ type Grammar struct{
 	nonTerminals []string
 	terminals []string
 	rules []Rule
+	nullable map[string]bool
+	first map[string][]string
+	follow map[string][]string
 }
 
 
