@@ -15,11 +15,15 @@ func Parse(path string) {
 
 	createParser()
 
+
+	/*
+	# How to SLR Parse
+	Init Grammar  + Augmentation
+	
+	*/ 
+
 	for true {
-		token, err := lexer.GetNext(tokenChannel)
-		if err != nil {
-			break
-		}
+		token := lexer.GetNext(tokenChannel)
 
 		switch token.Identifier {
 		case "LINE":
