@@ -15,13 +15,6 @@ func Parse(path string) {
 
 	createParser()
 
-
-	/*
-	# How to SLR Parse
-	Init Grammar  + Augmentation
-	
-	*/ 
-
 	for true {
 		token := lexer.GetNext(tokenChannel)
 
