@@ -13,11 +13,15 @@ func Parse(path string) {
 	fmt.Println("Started Parsing...")
 	linecount := 0
 
+
+	/*
+	# How to SLR Parse
+	Init Grammar  + Augmentation
+	
+	*/ 
+
 	for true {
-		token, err := lexer.GetNext(tokenChannel)
-		if err != nil {
-			break
-		}
+		token := lexer.GetNext(tokenChannel)
 
 		switch token.Identifier {
 		case "LINE":
@@ -33,8 +37,13 @@ func Parse(path string) {
 		}
 		// Do something with the token
 		
-		
-		fmt.Println("Parser finished")
-		fmt.Println()
+		// End of file
+		if token.Identifier == "END"{
+			break
+		}
 	}
+
+	
+	fmt.Println("Parser finished")
+	fmt.Println()
 }

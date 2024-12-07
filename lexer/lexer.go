@@ -15,15 +15,15 @@ type Token struct {
 }
 
 // Runs as go routine; called by the parser
-func GetNext(tokenChannel chan Token) (*Token, error) {
+func GetNext(tokenChannel chan Token) (*Token) {
 	// Wait until the channel with tokens has a value inside
 	select {
 	case newToken, ok := <-tokenChannel:
 		// If channel is closed -> File is done
 		if !ok {
-			return nil, errors.New("Lexer Error: File Ended")
+			sendToken("END", nil, tokenChannel)  
 		}
-		return &newToken, nil
+		return &newToken
 	}
 }
 
