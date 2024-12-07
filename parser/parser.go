@@ -13,6 +13,8 @@ func Parse(path string) {
 	fmt.Println("Started Parsing...")
 	linecount := 0
 
+	createParser()
+
 	for true {
 		token, err := lexer.GetNext(tokenChannel)
 		if err != nil {
@@ -37,4 +39,17 @@ func Parse(path string) {
 		fmt.Println("Parser finished")
 		fmt.Println()
 	}
+}
+
+func createParser() *SLR_parsing_Table{
+	grammar := AddGrammar()
+	grammar.Augment()
+	follow := grammar.CalcFollow()
+	automata := grammar.CreateSLRAutomata(follow)
+	table := automata.CreateSLRTable(grammar, &follow)
+	return table
+}
+
+func AddGrammar() *Grammar{
+
 }
