@@ -5,15 +5,17 @@ type Grammar struct{
 	nonTerminals []string
 	terminals []string
 	rules []Rule
-
+	follow map[string][]string
+	closure map[string][]Rule
 }
 
-type GrammarFollow struct{
+/*type GrammarFollow struct{
 	nullable map[string]bool
 	first map[string][]string
 	follow map[string][]string
 }
 
+*/
 
 // Epsilon -> " "
 type Rule struct{
@@ -38,15 +40,15 @@ func (grammar *Grammar) AddRule (nonTerminal string, production []string) Rule{
 	return newRule
 }
 
-func (grammar *Grammar) NULLABLE() map[string]bool{
+func (grammar *Grammar) NULLABLE() *map[string]bool{
 	// TODO: CALC NULLABLE
 }
 
-func (grammar *Grammar) FIRST(nonTerminal string) []string{
+func (grammar *Grammar) FIRST(nonTerminal string, nullable map[string]bool) []string{
 	// TODO: CALC FIRST
 }
 
-func (grammar *Grammar) FOLLOW(nonTerminal string) []string{
+func (grammar *Grammar) FOLLOW(nonTerminal string, nullable map[string]bool, first map[string][]string) []string{
 	// TODO: CALC FOLLOW
 }
 

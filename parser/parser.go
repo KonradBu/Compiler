@@ -39,12 +39,21 @@ func Parse(path string) {
 }
 
 func createParser() *SLR_parsing_Table{
+	// Not done
 	grammar := AddGrammar()
+	// Done
 	grammar.Augment()
-	follow := grammar.CalcFollow()
-	automata := grammar.CreateSLRAutomata(follow)
-	table := automata.CreateSLRTable(grammar, &follow)
+	// Not done??
+	grammar.CalcFollow()
+	// Done
+	grammar.CalcClosure()
+	// Not done
+	automata := grammar.CreateSLRAutomata()
+	// Done
+	table := automata.CreateSLRTable(grammar)
 	return table
+	// Not done
+	// parse()
 }
 
 func AddGrammar() *Grammar{

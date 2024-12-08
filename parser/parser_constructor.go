@@ -1,6 +1,6 @@
 package parser
 
-/* 
+/*
 Step 1:
 	Create Augmented Grammar
 Step 2:
@@ -15,7 +15,7 @@ Step 3:
 			-> Recursivly ad closure of all the new rules
 		goto(Current State, Symbol, Grammar)
 			For all Rules:
-				If "." is not at the end -> 
+				If "." is not at the end ->
 					Shift "." by 1
 					-> Make new state
 					-> If the Symbol before the "." was a non Terminal:
@@ -32,17 +32,17 @@ Step 4:
 			Goto: Non Terminals in the Grammar
 			In the Table we will fill out the different actions, that parser can take.
 			Shift, Reduce, Accept and Error
-		
+
 		Shift:
 			Go through all of our states:
 				If the rule is followed by a terminal symbol:
-					Shift into the state from goto + the terminal symbol 
+					Shift into the state from goto + the terminal symbol
 
 		Goto:
 			For all of out states:
 				If . is followed by a non terminal
 				-> Note the state that goto (current state, non terminal) goes to into the goto table
-		
+
 		Reduce:
 			If "." is at the end of a prediction:
 				Write into table: Reduce + The ID of the rule with the . at the end
@@ -61,7 +61,7 @@ Step 6:
 	New Table:
 		Stack: Starts with 0
 		Input: Starts with Input and String + Dollar
-		Action: 
+		Action:
 
 	Parsing:
 		Look at the symbol in the table: State on top of stack + the first symbol in the input string
@@ -83,31 +83,44 @@ Step 6:
 			Error
 */
 
-
-func (grammar *Grammar) Augment(){
+func (grammar *Grammar) Augment() {
 	oldStart := grammar.start
 	newStart := "S"
 	grammar.start = newStart
 	grammar.AddRule(newStart, []string{oldStart})
 }
 
-func (grammar *Grammar) CalcFollow() GrammarFollow{
-	GrammarFollow := new(GrammarFollow)
-	GrammarFollow.nullable = grammar.NULLABLE()
-	for _, nt := range grammar.nonTerminals{
-		GrammarFollow.first[nt] = grammar.FIRST(nt)
+func (grammar *Grammar) CalcFollow() {
+	nullable := *grammar.NULLABLE()
+	first := make(map[string][]string)
+	for _, nt := range grammar.nonTerminals {
+		first[nt] = grammar.FIRST(nt, nullable)
 	}
-	
-	for _, nt := range grammar.nonTerminals{
-		GrammarFollow.follow[nt] = grammar.FOLLOW(nt)
+	follow := make(map[string][]string)
+	for _, nt := range grammar.nonTerminals {
+		follow[nt] = grammar.FOLLOW(nt, nullable, first)
 	}
-	return *GrammarFollow
+	grammar.follow = follow
 }
 
-func closure(){
-
+func (grammar *Grammar) CalcClosure() {
+	closure := make(map[string][]Rule)
+	for _, nt := range grammar.nonTerminals {
+		for _, rule := range grammar.rules {
+			if rule.nonTerminal == nt {
+				closure[nt] = append(closure[nt], rule)
+			}
+		}
+	}
+	grammar.closure = closure
 }
 
-func goto(){
 
+func contains(arr []string, target string) int {
+	for i, a := range arr {
+		if a == target {
+			return i
+		}
+	}
+	return -1
 }
