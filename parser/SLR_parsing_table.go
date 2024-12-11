@@ -20,6 +20,36 @@ type GoTo struct {
 	val int
 }
 
+func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Table {
+	table := makeSlrParsingTable()
+
+	for _, item := range automata.items {
+		for _, rule := range item.rules {
+			dot := item.dots[&rule]
+			switch {
+			case automata.nonTerminals[rule.production[dot]]:
+				// The dot is before a non terminal
+				// Goto from the current item with the non terminal into the item consuming the current non terminal
+				table.AddGoTo(item.id, rule.nonTerminal, item.transitions[rule.production[dot]].id)
+			case automata.terminals[rule.production[dot]]:
+				// The dot is before a terminal
+				next := rule.production[dot]
+				table.AddAction(item.id, rule.production[dot], "Shift", item.transitions[next].id)
+			case len(rule.production) == dot:
+				// The dot is at the end of the production
+				for _, terminal := range grammar.follow[rule.nonTerminal] {
+					if terminal == "$" {
+						table.AddAction(item.id, "$", "Accept", 0)
+					} else {
+						table.AddAction(item.id, terminal, "Reduce", item.transitions[rule.nonTerminal].id)
+					}
+				}
+			}
+		}
+	}
+	return table
+}
+
 func makeSlrParsingTable() *SLR_parsing_Table{
 	newTable := new(SLR_parsing_Table)
 	newTable.actionTable = make(map[int]map[string]*Action)

@@ -159,10 +159,3 @@ func (grammar *Grammar) FOLLOW(nonTerminal string, first map[string][]string) []
 		panic("idk bro")
 	}
 }
-
-func makeStandardGrammar() *Grammar {
-	newGrammar := new(Grammar)
-	newGrammar.start = "S"
-	newGrammar.nonTerminals = append(newGrammar.nonTerminals, "S")
-	return newGrammar
-}
