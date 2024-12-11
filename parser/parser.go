@@ -92,8 +92,13 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar){
 	// Done
 	grammar.CalcClosure()
 	// Done
+	// Done
 	automata := grammar.CreateSLRAutomata()
 	// Done
 	table := automata.CreateSLRTable(grammar)
 	return table, grammar
+}
+
+func AddGrammar() *Grammar{
+	
 }
