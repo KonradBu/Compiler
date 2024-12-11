@@ -1,5 +1,7 @@
 package parser
 
+import "unicode"
+
 type Grammar struct{
 	start string
 	nonTerminals []string
@@ -38,6 +40,33 @@ func (grammar *Grammar) AddRule (nonTerminal string, production []string) Rule{
 	newRule := MakeRule(nonTerminal, production)
 	grammar.rules = append(grammar.rules, newRule)
 	return newRule
+}
+
+func MakeGrammar(rules []Rule, start string) *Grammar{
+	newGrammar := new(Grammar)
+	newGrammar.start = start
+	newGrammar.rules = rules
+	// Add Terminals/ Non terminals
+	for _, r := range rules{
+		newGrammar.nonTerminals = append(newGrammar.nonTerminals, r.nonTerminal)
+		for _, s:= range r.production{
+			if isNT(s){
+				newGrammar.nonTerminals = append(newGrammar.nonTerminals, s)
+			}else{
+				newGrammar.terminals = append(newGrammar.terminals, s)
+			}
+		}
+	}
+	return newGrammar
+}
+
+func isNT (input string) bool{
+	for _, r := range []rune(input){
+		if !unicode.IsUpper(r){
+			return false
+		}
+	}
+	return true
 }
 
 func (grammar *Grammar) NULLABLE() *map[string]bool{
