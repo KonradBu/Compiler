@@ -1,7 +1,9 @@
 package parser
 
+import "fmt"
+
 type SLR_automata struct {
-	items       []Item
+	items        []Item
 	start_state  int
 	nonTerminals map[string]bool
 	terminals    map[string]bool
@@ -64,15 +66,15 @@ func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
 	return automata
 }
 
-func (automata *SLR_automata) makeState(rules []Rule, dots []int, grammar *Grammar) *Item{
+func (automata *SLR_automata) makeState(rules []Rule, dots []int, grammar *Grammar) *Item {
 	newItem := new(Item)
 	newItem.dots = make(map[*Rule]int)
 	newItem.transitions = make(map[string]Item)
 	newItem.rules = rules
-	for i, rule := range rules{
+	for i, rule := range rules {
 		newItem.dots[&rule] = dots[i]
 	}
-	newItem.addClosure(grammar, )
+	newItem.addClosure(grammar)
 	automata.items = append(automata.items, *newItem)
 	return newItem
 }
@@ -100,9 +102,9 @@ func (grammar *Grammar) addClosureRecursive(item *Item, done map[string]bool) {
 	}
 }
 
-func (automata *SLR_automata) addGotoRecursive(item *Item, grammar *Grammar){
-	for _, r := range item.rules{
-		if item.dots[&r] < len(r.production){
+func (automata *SLR_automata) addGotoRecursive(item *Item, grammar *Grammar) {
+	for _, r := range item.rules {
+		if item.dots[&r] < len(r.production) {
 			automata.Goto(item, grammar, r.production[item.dots[&r]])
 		}
 	}
@@ -113,7 +115,7 @@ func (automata *SLR_automata) Goto(item *Item, grammar *Grammar, symbol string) 
 	rules := []Rule{}
 	dots := []int{}
 	for _, r := range item.rules {
-		if item.dots[&r] < len(r.production) && r.production[item.dots[&r]] == symbol{
+		if item.dots[&r] < len(r.production) && r.production[item.dots[&r]] == symbol {
 			dot := item.dots[&r] + 1
 			rules = append(rules, r)
 			dots = append(dots, dot)
@@ -121,15 +123,13 @@ func (automata *SLR_automata) Goto(item *Item, grammar *Grammar, symbol string) 
 	}
 	newItem = *automata.makeState(rules, dots, grammar)
 	refItem, itemDoesNotExist := automata.itemDoesNotExist(item)
-	if itemDoesNotExist{
+	if itemDoesNotExist {
 		automata.items = append(automata.items, newItem)
 		refItem = newItem
 		automata.addGotoRecursive(item, grammar)
 	}
 	item.transitions[symbol] = refItem
 }
-
-
 
 func (automata *SLR_automata) itemDoesNotExist(item *Item) (Item, bool) {
 	errorItem := new(Item)
@@ -157,7 +157,7 @@ func (automata *SLR_automata) itemDoesNotExist(item *Item) (Item, bool) {
 }
 
 func areTheRulesTheSame(existingRule Rule, existingDot int, newRule Rule, newDot int) bool {
-	if existingDot != newDot || existingRule.nonTerminal != existingRule.nonTerminal {
+	if existingDot != newDot || existingRule.nonTerminal != existingRule.nonTerminal || len(newRule.production) != len(existingRule.production) {
 		return false
 	}
 
@@ -167,4 +167,18 @@ func areTheRulesTheSame(existingRule Rule, existingDot int, newRule Rule, newDot
 		}
 	}
 	return true
+}
+
+func (automata *SLR_automata) Print() {
+	fmt.Println()
+	fmt.Println()
+	for i, item := range automata.items {
+		fmt.Print("Item ")
+		fmt.Println(string(i))
+		for _, r := range item.rules {
+			fmt.Print(r.nonTerminal + " -> ")
+			fmt.Print(r.production)
+			fmt.Println(item.dots[&r])
+		}
+	}
 }

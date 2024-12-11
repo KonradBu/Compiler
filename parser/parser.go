@@ -22,7 +22,7 @@ func Parse(path string, test bool) {
 
 	slrTable, grammar := createParser(test)
 
-	stack := makeStack("0")
+	stack := makeStack(0)
 
 	accepts := false
 	for true {
@@ -84,7 +84,7 @@ func Parse(path string, test bool) {
 func createParser(test bool) (*SLR_parsing_Table, *Grammar){
 	// Only done for test case
 	rules:= defGrammar(test)
-	grammar := MakeGrammar(rules, "S")
+	grammar := MakeGrammar(rules, "E")
 	// Done
 	grammar.Augment()
 	// Not done??
@@ -92,8 +92,12 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar){
 	// Done
 	grammar.CalcClosure()
 	// Done
+	fmt.Println(grammar.closure)
 	automata := grammar.CreateSLRAutomata()
+	automata.Print()
 	// Done
 	table := automata.CreateSLRTable(grammar)
+	fmt.Println("Table: ")
+	table.PrintTable()
 	return table, grammar
 }

@@ -21,7 +21,7 @@ type GoTo struct {
 }
 
 func makeSlrParsingTable() *SLR_parsing_Table{
-	newTable := makeSlrParsingTable()
+	newTable := new(SLR_parsing_Table)
 	newTable.actionTable = make(map[int]map[string]*Action)
 	newTable.gotoToTable = make(map[int]map[string]*GoTo)
 	return newTable
