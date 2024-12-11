@@ -47,7 +47,7 @@ func createParser() *SLR_parsing_Table{
 	grammar.CalcFollow()
 	// Done
 	grammar.CalcClosure()
-	// Not done
+	// Done
 	automata := grammar.CreateSLRAutomata()
 	// Done
 	table := automata.CreateSLRTable(grammar)
@@ -57,5 +57,5 @@ func createParser() *SLR_parsing_Table{
 }
 
 func AddGrammar() *Grammar{
-
+	
 }
