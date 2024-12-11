@@ -91,14 +91,13 @@ func (grammar *Grammar) Augment() {
 }
 
 func (grammar *Grammar) CalcFollow() {
-	nullable := *grammar.NULLABLE()
 	first := make(map[string][]string)
 	for _, nt := range grammar.nonTerminals {
-		first[nt] = grammar.FIRST(nt, nullable)
+		first[nt] = grammar.FIRST(nt)
 	}
 	follow := make(map[string][]string)
 	for _, nt := range grammar.nonTerminals {
-		follow[nt] = grammar.FOLLOW(nt, nullable, first)
+		follow[nt] = grammar.FOLLOW(nt, first)
 	}
 	grammar.follow = follow
 }

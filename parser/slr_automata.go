@@ -21,7 +21,7 @@ type DotRule struct {
 }
 
 func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Table {
-	table := MakeSLRTable()
+	table := makeSlrParsingTable()
 
 	for _, item := range automata.items {
 		for _, rule := range item.rules {

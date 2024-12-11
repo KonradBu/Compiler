@@ -20,6 +20,13 @@ type GoTo struct {
 	val int
 }
 
+func makeSlrParsingTable() *SLR_parsing_Table{
+	newTable := makeSlrParsingTable()
+	newTable.actionTable = make(map[int]map[string]*Action)
+	newTable.gotoToTable = make(map[int]map[string]*GoTo)
+	return newTable
+}
+
 func (table *SLR_parsing_Table) GetAction(item int, symbol string) (Action, error) {
 	if table.actionTable[item][symbol] != nil {
 		return *table.actionTable[item][symbol], nil

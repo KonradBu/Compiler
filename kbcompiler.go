@@ -1,7 +1,6 @@
 package main
 
 import (
-	"compiler/lexer"
 	"compiler/parser"
 	"fmt"
 	"flag"

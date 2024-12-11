@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
