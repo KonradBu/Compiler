@@ -79,9 +79,8 @@ func isNT(input string) bool {
 func (grammar *Grammar) FIRST(nonTerminal string) []string {
 	// TODO: CALC FIRST
 
-	fmt.Println("FIRST not done!!")
-
-	return []string{"id", "("}
+	return []string{"a"}
+	//return []string{"id", "("}
 }
 
 /*
@@ -150,12 +149,15 @@ func (grammar *Grammar) FOLLOW(nonTerminal string, first map[string][]string) []
 	fmt.Println("FOLLOW not done")
 	switch nonTerminal {
 	case "E":
-		return []string{")", "+"}
-	case "T":
-		return []string{"+", "*", ")"}
+		return []string{}
+	case "B":
+		return []string{}
+		//return []string{")", "+"}
+	//case "T":
+	//	return []string{"+", "*", ")"}
 	case "F":
 		return []string{"+", "*", ")"}
 	default:
-		panic("idk bro")
+		panic("Error Calculating Follow")
 	}
 }

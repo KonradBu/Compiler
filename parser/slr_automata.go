@@ -3,7 +3,7 @@ package parser
 import "fmt"
 
 type SLR_automata struct {
-	items        []Item
+	items []Item
 }
 
 type Item struct {
@@ -12,7 +12,6 @@ type Item struct {
 	dots        map[*Rule]int
 	transitions map[string]Item
 }
-
 
 func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
 	automata := new(SLR_automata)
@@ -33,11 +32,16 @@ func (automata *SLR_automata) makeItem(rules []Rule, dots []int, grammar *Gramma
 	newItem.dots = make(map[*Rule]int)
 	newItem.transitions = make(map[string]Item)
 	newItem.rules = rules
-	for i, rule := range rules {
-		newItem.dots[&rule] = dots[i]
-	}
 	newItem.addClosure(grammar)
+	for i, rule := range rules {
+		newdot := 0
+		if i < len(dots) {
+			newdot = dots[i]
+		}
+		newItem.dots[&rule] = newdot
+	}
 	automata.items = append(automata.items, *newItem)
+	fmt.Println(newItem.dots)
 	return newItem
 }
 
@@ -50,9 +54,9 @@ func (grammar *Grammar) addClosureRecursive(item *Item, done map[string]bool) {
 	changed := false
 	for _, rule := range item.rules {
 		var nt string
-		if item.dots[&rule] < len(rule.production){
+		if item.dots[&rule] < len(rule.production) {
 			nt = rule.production[item.dots[&rule]]
-		}else{
+		} else {
 			continue
 		}
 		if !done[nt] {
@@ -94,7 +98,7 @@ func (automata *SLR_automata) Goto(item *Item, grammar *Grammar, symbol string) 
 		automata.items = append(automata.items, newItem)
 		item.transitions[symbol] = newItem
 		automata.addGotoRecursive(item, grammar)
-	}else{
+	} else {
 		item.transitions[symbol] = otherItem
 	}
 }
@@ -107,9 +111,9 @@ func (automata *SLR_automata) itemDoesNotExist(newitem *Item) (Item, bool) {
 	// If the no state in the automata is the same, return true
 
 	for _, existingItem := range automata.items {
-		
+
 		itemsAreTheSame := true
-		
+
 		for _, existingRule := range existingItem.rules {
 			ruleIsInNewAutomata := false
 			for _, newRule := range newitem.rules {
@@ -124,7 +128,7 @@ func (automata *SLR_automata) itemDoesNotExist(newitem *Item) (Item, bool) {
 				break
 			}
 		}
-		
+
 		if itemsAreTheSame {
 			return existingItem, false
 		}
