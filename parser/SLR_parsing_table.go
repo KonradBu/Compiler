@@ -27,11 +27,11 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 		for _, rule := range item.rules {
 			dot := item.dots[&rule]
 			switch {
-			case automata.nonTerminals[rule.production[dot]]:
+			case contains(grammar.nonTerminals, rule.production[dot]) != -1:
 				// The dot is before a non terminal
 				// Goto from the current item with the non terminal into the item consuming the current non terminal
 				table.AddGoTo(item.id, rule.nonTerminal, item.transitions[rule.production[dot]].id)
-			case automata.terminals[rule.production[dot]]:
+			case contains(grammar.terminals, rule.production[dot]) != -1:
 				// The dot is before a terminal
 				next := rule.production[dot]
 				table.AddAction(item.id, rule.production[dot], "Shift", item.transitions[next].id)
@@ -50,7 +50,7 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 	return table
 }
 
-func makeSlrParsingTable() *SLR_parsing_Table{
+func makeSlrParsingTable() *SLR_parsing_Table {
 	newTable := new(SLR_parsing_Table)
 	newTable.actionTable = make(map[int]map[string]*Action)
 	newTable.gotoToTable = make(map[int]map[string]*GoTo)
@@ -65,7 +65,7 @@ func (table *SLR_parsing_Table) GetAction(item int, symbol string) (Action, erro
 }
 
 func (table *SLR_parsing_Table) GetGoto(item int, symbol string) (GoTo, error) {
-	if table.gotoToTable[item][symbol] != nil{
+	if table.gotoToTable[item][symbol] != nil {
 		return *table.gotoToTable[item][symbol], nil
 	}
 	return GoTo{}, errors.New("Could not get next Goto")
@@ -80,19 +80,28 @@ func MakeAction(ty string, value int) Action {
 
 func (table *SLR_parsing_Table) AddAction(state int, terminal string, actionType string, ActionValue int) {
 	newAction := MakeAction(actionType, ActionValue)
+	if table.actionTable[state] == nil{
+		table.actionTable[state] = make(map[string]*Action)
+	}
 	if table.actionTable[state][terminal] != nil {
-		panic("Grammar does not seem to be SLR Parsable")
+		panic("Grammar does not seem to be SLR Parsable, Action Table Error")
 	}
 	table.actionTable[state][terminal] = &newAction
 }
 
-func MakeGoto(val int) *GoTo{
+func MakeGoto(val int) *GoTo {
 	newGoto := new(GoTo)
 	newGoto.val = val
 	return newGoto
 }
 
 func (table *SLR_parsing_Table) AddGoTo(state int, symbol string, newstate int) {
+	if table.gotoToTable[state] == nil {
+		table.gotoToTable[state] = make(map[string]*GoTo)
+	}
+	if table.gotoToTable[state][symbol] != nil{
+		panic("Grammar does not seem to be SLR Parsable, GoTo Table error")
+	}
 	table.gotoToTable[state][symbol] = MakeGoto(newstate)
 }
 
@@ -121,12 +130,12 @@ func (table *SLR_parsing_Table) PrintTable() {
 	}
 }
 
-func (table SLR_parsing_Table) getNextExpectedTokens(item int) string{
+func (table SLR_parsing_Table) getNextExpectedTokens(item int) string {
 	retString := ""
-	for i, _ := range table.actionTable[item] {
+	for i := range table.actionTable[item] {
 		retString += " " + i
 	}
-	for i, _ := range table.gotoToTable[item]{
+	for i := range table.gotoToTable[item] {
 		retString += " " + i
 	}
 	return retString

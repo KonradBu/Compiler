@@ -4,9 +4,6 @@ import "fmt"
 
 type SLR_automata struct {
 	items        []Item
-	start_state  int
-	nonTerminals map[string]bool
-	terminals    map[string]bool
 }
 
 type Item struct {
@@ -16,12 +13,6 @@ type Item struct {
 	transitions map[string]Item
 }
 
-type DotRule struct {
-	dot         int
-	nonTerminal string
-	production  []string
-}
-
 
 func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
 	automata := new(SLR_automata)
@@ -29,15 +20,15 @@ func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
 	for _, r := range grammar.rules {
 		if r.nonTerminal == "S" {
 			startRule = r
+			break
 		}
 	}
-	startState := automata.makeState([]Rule{startRule}, []int{0}, grammar)
-	automata.start_state = 0
-	automata.addGotoRecursive(startState, grammar)
+	startItem := automata.makeItem([]Rule{startRule}, []int{0}, grammar)
+	automata.addGotoRecursive(startItem, grammar)
 	return automata
 }
 
-func (automata *SLR_automata) makeState(rules []Rule, dots []int, grammar *Grammar) *Item {
+func (automata *SLR_automata) makeItem(rules []Rule, dots []int, grammar *Grammar) *Item {
 	newItem := new(Item)
 	newItem.dots = make(map[*Rule]int)
 	newItem.transitions = make(map[string]Item)
@@ -58,7 +49,12 @@ func (item *Item) addClosure(grammar *Grammar) {
 func (grammar *Grammar) addClosureRecursive(item *Item, done map[string]bool) {
 	changed := false
 	for _, rule := range item.rules {
-		nt := rule.production[item.dots[&rule]]
+		var nt string
+		if item.dots[&rule] < len(rule.production){
+			nt = rule.production[item.dots[&rule]]
+		}else{
+			continue
+		}
 		if !done[nt] {
 			item.rules = append(item.rules, grammar.closure[nt]...)
 			for _, rule := range grammar.closure[nt] {
@@ -87,31 +83,39 @@ func (automata *SLR_automata) Goto(item *Item, grammar *Grammar, symbol string) 
 	dots := []int{}
 	for _, r := range item.rules {
 		if item.dots[&r] < len(r.production) && r.production[item.dots[&r]] == symbol {
-			dot := item.dots[&r] + 1
+			newdot := item.dots[&r] + 1
 			rules = append(rules, r)
-			dots = append(dots, dot)
+			dots = append(dots, newdot)
 		}
 	}
-	newItem = *automata.makeState(rules, dots, grammar)
-	refItem, itemDoesNotExist := automata.itemDoesNotExist(item)
+	newItem = *automata.makeItem(rules, dots, grammar)
+	otherItem, itemDoesNotExist := automata.itemDoesNotExist(item)
 	if itemDoesNotExist {
 		automata.items = append(automata.items, newItem)
-		refItem = newItem
+		item.transitions[symbol] = newItem
 		automata.addGotoRecursive(item, grammar)
+	}else{
+		item.transitions[symbol] = otherItem
 	}
-	item.transitions[symbol] = refItem
 }
 
-func (automata *SLR_automata) itemDoesNotExist(item *Item) (Item, bool) {
-	errorItem := new(Item)
+func (automata *SLR_automata) itemDoesNotExist(newitem *Item) (Item, bool) {
+	// Go through every item already in the automata.
+	// Go through every rule in that automata
+	// If that rule is not in the other automata skip this automata
+	// If every rule is in that state -> return false
+	// If the no state in the automata is the same, return true
+
 	for _, existingItem := range automata.items {
+		
 		itemsAreTheSame := true
+		
 		for _, existingRule := range existingItem.rules {
 			ruleIsInNewAutomata := false
-			for _, newRule := range item.rules {
-				if areTheRulesTheSame(existingRule, existingItem.dots[&existingRule], newRule, item.dots[&newRule]) {
+			for _, newRule := range newitem.rules {
+				if areTheRulesTheSame(existingRule, existingItem.dots[&existingRule], newRule, newitem.dots[&newRule]) {
 					ruleIsInNewAutomata = true
-					// Breaks the check over all the rules
+					// Breaks the check over all the rules for one specific rule in the old old automata
 					break
 				}
 			}
@@ -120,11 +124,12 @@ func (automata *SLR_automata) itemDoesNotExist(item *Item) (Item, bool) {
 				break
 			}
 		}
+		
 		if itemsAreTheSame {
 			return existingItem, false
 		}
 	}
-	return *errorItem, true
+	return Item{}, true
 }
 
 func areTheRulesTheSame(existingRule Rule, existingDot int, newRule Rule, newDot int) bool {
@@ -145,7 +150,7 @@ func (automata *SLR_automata) Print() {
 	fmt.Println()
 	for i, item := range automata.items {
 		fmt.Print("Item ")
-		fmt.Println(string(i))
+		fmt.Println(i)
 		for _, r := range item.rules {
 			fmt.Print(r.nonTerminal + " -> ")
 			fmt.Print(r.production)
