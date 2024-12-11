@@ -1,8 +1,7 @@
 #### Compiler
-Compiler from minimized C# to Jasmin Assambly
--> For compiler construction at HHU Düsseldorf
+Compiler from a subset of C# to Jasmin Assembly
+For the course compiler construction at HHU Düsseldorf
 By Konrad Burgi
-
 
 
 #### How to run and compile
@@ -14,3 +13,6 @@ Run:
 
 -liveness for variable liveness analysis
 -constant for constant propogation analysis
+
+#### Info
+Uses a SRL(0) parser

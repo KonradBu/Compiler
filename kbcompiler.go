@@ -1,12 +1,9 @@
 package main
 
 import (
-	_ "compiler/automata"
-	_ "compiler/lexer"
+	"compiler/lexer"
 	"compiler/parser"
 	"fmt"
-
-	//compiler/util"
 	"flag"
 	"os"
 )
@@ -39,14 +36,14 @@ func main() {
 
 	if *compile {
 		// Send code to tokenizer
-		parser.Parse(path)
+		parser.Parse(path, true)
 	}
 
 	if *liveness {
-		//
+		panic ("Not implemented")
 	}
 
 	if *constants {
-
+		panic ("Not implemented")
 	}
 }
