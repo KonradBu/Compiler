@@ -10,7 +10,7 @@ type SLR_automata struct {
 type State struct {
 	id          int
 	rules       []ItemRule
-	transitions map[string]State
+	transitions map[string]int
 }
 
 type ItemRule struct {
@@ -22,7 +22,10 @@ type GrammarClosure struct {
 	closure map[string][]ItemRule
 }
 
+var stateIndex int
+
 func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
+	stateIndex = 0
 	automata := new(SLR_automata)
 	var startRule Rule
 	for _, r := range grammar.rules {
@@ -37,6 +40,8 @@ func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
 	startItemRule.rule = startRule
 	startState := makeState([]ItemRule{*startItemRule}, *grammarClosure)
 	automata.states = append(automata.states, *startState)
+	startState.id = 0
+	stateIndex++
 	startState.GoTo(automata, *grammarClosure)
 	return automata
 }
@@ -58,7 +63,7 @@ func (grammar *Grammar) makeGrammarClosure() *GrammarClosure {
 
 func makeState(itemRules []ItemRule, closure GrammarClosure) *State {
 	newState := new(State)
-	newState.transitions = make(map[string]State)
+	newState.transitions = make(map[string]int)
 	newState.rules = itemRules
 	newState.addClosure(&closure)
 	return newState
@@ -129,11 +134,13 @@ func (oldState *State) GoTo(automata *SLR_automata, closure GrammarClosure) {
 
 		existingState, doesNotExist := automata.stateDoesNotExist(newState)
 		if doesNotExist {
+			newState.id = stateIndex
+			stateIndex++
 			automata.states = append(automata.states, *newState)
-			oldState.transitions[symbol] = *newState
+			oldState.transitions[symbol] = newState.id
 			newState.GoTo(automata, closure)
 		} else {
-			oldState.transitions[symbol] = *existingState
+			oldState.transitions[symbol] = existingState.id
 			fmt.Println("Deleted:")
 			fmt.Println(newState)
 		}
@@ -185,8 +192,9 @@ func areTheRulesTheSame(existingRule ItemRule, newRule ItemRule) bool {
 func (automata *SLR_automata) Print() {
 	fmt.Println()
 	fmt.Println()
-	automata.addId()
 	for _, state := range automata.states {
+		fmt.Println()
+		fmt.Println()
 		fmt.Print("State ")
 		fmt.Println(state.id)
 		for _, r := range state.rules {
@@ -195,9 +203,10 @@ func (automata *SLR_automata) Print() {
 			fmt.Println(r.dot)
 		}
 		fmt.Println("Transitions:")
-		for input, endState := range state.transitions {
+		for input, endStateId := range state.transitions {
 			fmt.Print("-> ")
-			fmt.Print(endState.id)
+			b := endStateId
+			fmt.Print(b)
 			fmt.Println(" with " + input)
 		}
 	}

@@ -21,7 +21,6 @@ type GoTo struct {
 }
 
 func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Table {
-	automata.addId()
 	table := makeSlrParsingTable()
 
 	for _, state := range automata.states {
@@ -31,17 +30,17 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 			case contains(grammar.nonTerminals, afterdot) != -1:
 				// The dot is before a non terminal
 				// Goto from the current state with the non terminal into the state consuming the current non terminal
-				table.AddGoTo(state.id, itemrule.rule.nonTerminal, state.transitions[afterdot].id)
+				table.AddGoTo(state.id, itemrule.rule.nonTerminal, state.transitions[afterdot])
 			case contains(grammar.terminals, afterdot) != -1:
 				// The dot is before a terminal
-				table.AddAction(state.id, afterdot, "Shift", state.transitions[afterdot].id)
+				table.AddAction(state.id, afterdot, "Shift", state.transitions[afterdot])
 			case len(itemrule.rule.production) == itemrule.dot:
 				// The dot is at the end of the production
 				for _, terminal := range grammar.follow[itemrule.rule.nonTerminal] {
 					if terminal == "$" {
 						table.AddAction(state.id, "$", "Accept", 0)
 					} else {
-						table.AddAction(state.id, terminal, "Reduce", state.transitions[itemrule.rule.nonTerminal].id)
+						table.AddAction(state.id, terminal, "Reduce", state.transitions[itemrule.rule.nonTerminal])
 					}
 				}
 			}
