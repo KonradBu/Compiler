@@ -31,10 +31,11 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 			} else {
 				// The dot is at the end of the production
 				for _, terminal := range grammar.follow[itemrule.rule.nonTerminal] {
-					if terminal == "$" {
+					if terminal == "$" && itemrule.rule.nonTerminal == "S" {
 						table.AddAction(state.id, "$", "Accept", 0)
 					} else {
-						table.AddAction(state.id, terminal, "Reduce", state.transitions[itemrule.rule.nonTerminal])
+						ruleID := detRuleId(grammar, itemrule)
+						table.AddAction(state.id, terminal, "Reduce", ruleID)
 					}
 				}
 			}
@@ -108,17 +109,20 @@ func (table *SLR_parsing_Table) AddGoTo(state int, symbol string, newstate int) 
 	table.gotoToTable[state][symbol] = MakeGoto(newstate)
 }
 
-func (table *SLR_parsing_Table) PrintTable() {
+func (table *SLR_parsing_Table) PrintTable(grammar *Grammar) {
 	fmt.Println("Action: ")
 	for i, m := range table.actionTable {
-		fmt.Print(i)
+		fmt.Println(i)
 		for str, action := range m {
-			if str == "$" {
-				fmt.Print(str + " ")
-				fmt.Print(action.actionType + " ")
-				fmt.Print(action.value)
-				fmt.Print(" ")
+			fmt.Print(str + " ")
+			fmt.Print(action.actionType + " ")
+			switch action.actionType {
+			case "Shift":
+				fmt.Println(action.value)
+			case "Reduce":
+				fmt.Println(grammar.rules[action.value])
 			}
+			fmt.Print(" ")
 		}
 		fmt.Println()
 	}
@@ -144,4 +148,16 @@ func (table SLR_parsing_Table) getNextExpectedTokens(state int) string {
 		retString += " " + i
 	}
 	return retString
+}
+
+func detRuleId(grammar *Grammar, itemrule ItemRule) int {
+	for i, r := range grammar.rules {
+		newitemrule := new(ItemRule)
+		newitemrule.rule = r
+		newitemrule.dot = itemrule.dot
+		if areTheRulesTheSame(itemrule, *newitemrule) {
+			return i
+		}
+	}
+	panic("Rule not found in grammar for ID verfication")
 }

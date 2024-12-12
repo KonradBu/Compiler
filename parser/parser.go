@@ -97,12 +97,11 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	// Done
 	table := automata.CreateSLRTable(grammar)
 	fmt.Println("Table: ")
-	table.PrintTable()
+	table.PrintTable(grammar)
 	return table, grammar
 }
 
-
-func accept(){
+func accept() {
 	fmt.Println()
 	fmt.Println()
 	fmt.Println("###############")
