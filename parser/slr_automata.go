@@ -8,7 +8,7 @@ type SLR_automata struct {
 	states []State
 }
 type State struct {
-	id int
+	id          int
 	rules       []ItemRule
 	transitions map[string]State
 }
@@ -117,7 +117,14 @@ func (oldState *State) GoTo(automata *SLR_automata, closure GrammarClosure) {
 	}
 
 	for symbol, rules := range rulesPerSymbol {
-		newState := makeState(rules, closure)
+		newRules := []ItemRule{}
+		for _, rule := range rules {
+			newItemRule := new(ItemRule)
+			newItemRule.rule = rule.rule
+			newItemRule.dot = rule.dot + 1
+			newRules = append(newRules, *newItemRule)
+		}
+		newState := makeState(newRules, closure)
 		newState.addClosure(&closure)
 
 		existingState, doesNotExist := automata.stateDoesNotExist(newState)
@@ -178,13 +185,20 @@ func areTheRulesTheSame(existingRule ItemRule, newRule ItemRule) bool {
 func (automata *SLR_automata) Print() {
 	fmt.Println()
 	fmt.Println()
-	for i, state := range automata.states {
+	automata.addId()
+	for _, state := range automata.states {
 		fmt.Print("State ")
-		fmt.Println(i)
+		fmt.Println(state.id)
 		for _, r := range state.rules {
 			fmt.Print(r.rule.nonTerminal + " -> ")
 			fmt.Print(r.rule.production)
 			fmt.Println(r.dot)
+		}
+		fmt.Println("Transitions:")
+		for input, endState := range state.transitions {
+			fmt.Print("-> ")
+			fmt.Print(endState.id)
+			fmt.Println(" with " + input)
 		}
 	}
 }

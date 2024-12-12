@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"compiler/deprecated/automata"
 	"errors"
 	"fmt"
 )
@@ -51,9 +50,9 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 	return table
 }
 
-func (automata *SLR_automata) addId(){
-	for i, state := range automata.states{
-		state.id = i
+func (automata *SLR_automata) addId() {
+	for i := range automata.states {
+		automata.states[i].id = i
 	}
 }
 
@@ -87,7 +86,7 @@ func MakeAction(ty string, value int) Action {
 
 func (table *SLR_parsing_Table) AddAction(state int, terminal string, actionType string, ActionValue int) {
 	newAction := MakeAction(actionType, ActionValue)
-	if table.actionTable[state] == nil{
+	if table.actionTable[state] == nil {
 		table.actionTable[state] = make(map[string]*Action)
 	}
 	if table.actionTable[state][terminal] != nil {
@@ -106,7 +105,7 @@ func (table *SLR_parsing_Table) AddGoTo(state int, symbol string, newstate int) 
 	if table.gotoToTable[state] == nil {
 		table.gotoToTable[state] = make(map[string]*GoTo)
 	}
-	if table.gotoToTable[state][symbol] != nil{
+	if table.gotoToTable[state][symbol] != nil {
 		panic("Grammar does not seem to be SLR Parsable, GoTo Table error")
 	}
 	table.gotoToTable[state][symbol] = MakeGoto(newstate)

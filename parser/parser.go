@@ -5,15 +5,13 @@ import (
 	"fmt"
 )
 
-
-type ParseTree struct{
+type ParseTree struct {
 	identifier string
-	leaves *ParseTree
+	leaves     *ParseTree
 }
 
-
 func Parse(path string, test bool) {
-	
+
 	tokenChannel := make(chan lexer.Token)
 	go lexer.Lex(path, tokenChannel)
 
@@ -28,26 +26,26 @@ func Parse(path string, test bool) {
 	for true {
 		token := lexer.GetNext(tokenChannel)
 
-		if token == nil{
-			if accepts{
+		if token == nil {
+			if accepts {
 				break
-			}else{
+			} else {
 				panic("File Ended. Unnexpected Symbol " + token.Identifier)
 			}
 		}
-		if token.Identifier == "LINE"{
+		if token.Identifier == "LINE" {
 			linecount++
 			continue
 		}
 
 		// Do only once, unless reduce is found
-		for i := 0; i < 1; i++ { 
-			stackVal:= *stack.Val
+		for i := 0; i < 1; i++ {
+			stackVal := *stack.Val
 			res, err := slrTable.GetAction(stackVal.(int), token.Identifier)
-			if err != nil{
+			if err != nil {
 				panic("Parsing Error. Cannot work with the symbol:  " + string(stackVal.(int)) + " at line " + string(linecount))
 			}
-			switch res.actionType{
+			switch res.actionType {
 			case "Shift":
 				stack.add(token)
 				stack.add(res.value)
@@ -56,14 +54,14 @@ func Parse(path string, test bool) {
 				i--
 				// Get the Rule that we reduce by
 				reductionRule := grammar.rules[res.value]
-				for range reductionRule.production{
+				for range reductionRule.production {
 					stack.pop()
 					stack.pop()
 				}
 				stack.add(reductionRule.production)
 				stateBefore := *stack.Next.Val
 				gotoVal, err := slrTable.GetGoto(stateBefore.(int), reductionRule.nonTerminal)
-				if err != nil{				
+				if err != nil {
 					panic("Parsing Error. Cannot work with the symbol:  " + string(stackVal.(int)) + " at line " + string(linecount))
 				}
 				stack.add(gotoVal.val)
@@ -72,18 +70,18 @@ func Parse(path string, test bool) {
 			}
 		}
 	}
-	if accepts{
+	if accepts {
 		fmt.Println("Parser finished")
 		fmt.Println()
-	}else{
+	} else {
 		next := slrTable.getNextExpectedTokens(stack.pop().(int))
 		panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
 	}
 }
 
-func createParser(test bool) (*SLR_parsing_Table, *Grammar){
+func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	// Only done for test case
-	rules:= defGrammar(test)
+	rules := defGrammar(test)
 	grammar := MakeGrammar(rules, "E")
 	// Done
 	grammar.Augment()
