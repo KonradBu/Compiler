@@ -1,16 +1,25 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type SLR_automata struct {
-	items []Item
+	states []State
+}
+type State struct {
+	id int
+	rules       []ItemRule
+	transitions map[string]State
 }
 
-type Item struct {
-	id          int
-	rules       []Rule
-	dots        map[*Rule]int
-	transitions map[string]Item
+type ItemRule struct {
+	rule Rule
+	dot  int
+}
+
+type GrammarClosure struct {
+	closure map[string][]ItemRule
 }
 
 func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
@@ -22,127 +31,144 @@ func (grammar *Grammar) CreateSLRAutomata() *SLR_automata {
 			break
 		}
 	}
-	startItem := automata.makeItem([]Rule{startRule}, []int{0}, grammar)
-	automata.addGotoRecursive(startItem, grammar)
+	grammarClosure := grammar.makeGrammarClosure()
+	startItemRule := new(ItemRule)
+	startItemRule.dot = 0
+	startItemRule.rule = startRule
+	startState := makeState([]ItemRule{*startItemRule}, *grammarClosure)
+	automata.states = append(automata.states, *startState)
+	startState.GoTo(automata, *grammarClosure)
 	return automata
 }
 
-func (automata *SLR_automata) makeItem(rules []Rule, dots []int, grammar *Grammar) *Item {
-	newItem := new(Item)
-	newItem.dots = make(map[*Rule]int)
-	newItem.transitions = make(map[string]Item)
-	newItem.rules = rules
-	newItem.addClosure(grammar)
-	for i, rule := range rules {
-		newdot := 0
-		if i < len(dots) {
-			newdot = dots[i]
+func (grammar *Grammar) makeGrammarClosure() *GrammarClosure {
+	newClosure := new(GrammarClosure)
+	newClosure.closure = make(map[string][]ItemRule)
+	for symbol, closure := range grammar.closure {
+		newClosure.closure[symbol] = []ItemRule{}
+		for _, rule := range closure {
+			newItemRule := new(ItemRule)
+			newItemRule.rule = rule
+			newItemRule.dot = 0
+			newClosure.closure[symbol] = append(newClosure.closure[symbol], *newItemRule)
 		}
-		newItem.dots[&rule] = newdot
 	}
-	automata.items = append(automata.items, *newItem)
-	fmt.Println(newItem.dots)
-	return newItem
+	return newClosure
 }
 
-func (item *Item) addClosure(grammar *Grammar) {
+func makeState(itemRules []ItemRule, closure GrammarClosure) *State {
+	newState := new(State)
+	newState.transitions = make(map[string]State)
+	newState.rules = itemRules
+	newState.addClosure(&closure)
+	return newState
+}
+
+func (state *State) addClosure(closure *GrammarClosure) {
 	done := make(map[string]bool)
-	grammar.addClosureRecursive(item, done)
+	state.addClosureRecursive(*closure, done)
 }
 
-func (grammar *Grammar) addClosureRecursive(item *Item, done map[string]bool) {
+func (state *State) addClosureRecursive(closure GrammarClosure, done map[string]bool) {
 	changed := false
-	for _, rule := range item.rules {
+	for _, itemrule := range state.rules {
 		var nt string
-		if item.dots[&rule] < len(rule.production) {
-			nt = rule.production[item.dots[&rule]]
+		if itemrule.dot < len(itemrule.rule.production) {
+			nt = itemrule.rule.production[itemrule.dot]
 		} else {
 			continue
 		}
 		if !done[nt] {
-			item.rules = append(item.rules, grammar.closure[nt]...)
-			for _, rule := range grammar.closure[nt] {
-				item.dots[&rule] = 0
+			// Add the entrie closure to the state
+			for _, newrule := range closure.closure[nt] {
+				// Check if the rule exists already
+				rulesAreTheSame := false
+				for _, existingrule := range state.rules {
+					if areTheRulesTheSame(newrule, existingrule) {
+						rulesAreTheSame = true
+						break
+					}
+				}
+				if rulesAreTheSame {
+					continue
+				}
+				// Is a new rule
+				state.rules = append(state.rules, newrule)
+				changed = true
 			}
-			changed = true
 			done[nt] = true
 		}
 	}
 	if changed {
-		grammar.addClosureRecursive(item, done)
+		state.addClosureRecursive(closure, done)
 	}
 }
 
-func (automata *SLR_automata) addGotoRecursive(item *Item, grammar *Grammar) {
-	for _, r := range item.rules {
-		if item.dots[&r] < len(r.production) {
-			automata.Goto(item, grammar, r.production[item.dots[&r]])
+func (oldState *State) GoTo(automata *SLR_automata, closure GrammarClosure) {
+	rulesPerSymbol := make(map[string][]ItemRule)
+
+	for _, r := range oldState.rules {
+		if r.dot < len(r.rule.production) {
+			if rulesPerSymbol[r.rule.production[r.dot]] == nil {
+				rulesPerSymbol[r.rule.production[r.dot]] = []ItemRule{}
+			}
+			rulesPerSymbol[r.rule.production[r.dot]] = append(rulesPerSymbol[r.rule.production[r.dot]], r)
+		}
+	}
+
+	for symbol, rules := range rulesPerSymbol {
+		newState := makeState(rules, closure)
+		newState.addClosure(&closure)
+
+		existingState, doesNotExist := automata.stateDoesNotExist(newState)
+		if doesNotExist {
+			automata.states = append(automata.states, *newState)
+			oldState.transitions[symbol] = *newState
+			newState.GoTo(automata, closure)
+		} else {
+			oldState.transitions[symbol] = *existingState
+			fmt.Println("Deleted:")
+			fmt.Println(newState)
 		}
 	}
 }
 
-func (automata *SLR_automata) Goto(item *Item, grammar *Grammar, symbol string) {
-	var newItem Item
-	rules := []Rule{}
-	dots := []int{}
-	for _, r := range item.rules {
-		if item.dots[&r] < len(r.production) && r.production[item.dots[&r]] == symbol {
-			newdot := item.dots[&r] + 1
-			rules = append(rules, r)
-			dots = append(dots, newdot)
+func (automata *SLR_automata) stateDoesNotExist(newState *State) (*State, bool) {
+	for _, existingState := range automata.states {
+		if len(existingState.rules) != len(newState.rules) {
+			continue
 		}
-	}
-	newItem = *automata.makeItem(rules, dots, grammar)
-	otherItem, itemDoesNotExist := automata.itemDoesNotExist(item)
-	if itemDoesNotExist {
-		automata.items = append(automata.items, newItem)
-		item.transitions[symbol] = newItem
-		automata.addGotoRecursive(item, grammar)
-	} else {
-		item.transitions[symbol] = otherItem
-	}
-}
-
-func (automata *SLR_automata) itemDoesNotExist(newitem *Item) (Item, bool) {
-	// Go through every item already in the automata.
-	// Go through every rule in that automata
-	// If that rule is not in the other automata skip this automata
-	// If every rule is in that state -> return false
-	// If the no state in the automata is the same, return true
-
-	for _, existingItem := range automata.items {
-
-		itemsAreTheSame := true
-
-		for _, existingRule := range existingItem.rules {
-			ruleIsInNewAutomata := false
-			for _, newRule := range newitem.rules {
-				if areTheRulesTheSame(existingRule, existingItem.dots[&existingRule], newRule, newitem.dots[&newRule]) {
-					ruleIsInNewAutomata = true
-					// Breaks the check over all the rules for one specific rule in the old old automata
+		thisIsTheItem := true
+		for _, existingRule := range existingState.rules {
+			ruleFound := false
+			for _, newRule := range newState.rules {
+				if areTheRulesTheSame(newRule, existingRule) {
+					// Found the rule, breaks loop over the rules of the new automata
+					ruleFound = true
 					break
 				}
 			}
-			if !ruleIsInNewAutomata {
-				itemsAreTheSame = false
+			if !ruleFound {
+				thisIsTheItem = false
 				break
 			}
 		}
-
-		if itemsAreTheSame {
-			return existingItem, false
+		if thisIsTheItem {
+			return &existingState, false
 		}
 	}
-	return Item{}, true
+	// Have not found a valid State
+	return &State{}, true
 }
 
-func areTheRulesTheSame(existingRule Rule, existingDot int, newRule Rule, newDot int) bool {
-	if existingDot != newDot || existingRule.nonTerminal != existingRule.nonTerminal || len(newRule.production) != len(existingRule.production) {
+func areTheRulesTheSame(existingRule ItemRule, newRule ItemRule) bool {
+	// Fucking hours OMG FUCK
+	if existingRule.dot != newRule.dot || existingRule.rule.nonTerminal != newRule.rule.nonTerminal || len(newRule.rule.production) != len(existingRule.rule.production) {
 		return false
 	}
 
-	for i, s := range existingRule.production {
-		if newRule.production[i] != s {
+	for i, s := range existingRule.rule.production {
+		if newRule.rule.production[i] != s {
 			return false
 		}
 	}
@@ -152,13 +178,13 @@ func areTheRulesTheSame(existingRule Rule, existingDot int, newRule Rule, newDot
 func (automata *SLR_automata) Print() {
 	fmt.Println()
 	fmt.Println()
-	for i, item := range automata.items {
-		fmt.Print("Item ")
+	for i, state := range automata.states {
+		fmt.Print("State ")
 		fmt.Println(i)
-		for _, r := range item.rules {
-			fmt.Print(r.nonTerminal + " -> ")
-			fmt.Print(r.production)
-			fmt.Println(item.dots[&r])
+		for _, r := range state.rules {
+			fmt.Print(r.rule.nonTerminal + " -> ")
+			fmt.Print(r.rule.production)
+			fmt.Println(r.dot)
 		}
 	}
 }

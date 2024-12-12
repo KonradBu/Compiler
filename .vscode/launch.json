@@ -8,8 +8,10 @@
             "name": "Launch Package",
             "type": "go",
             "request": "launch",
-            "mode": "auto",
-            "program": "kbcompile.go"
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": ["-compile", "/home/konradburgi/Documents/hhu/gitCode/compilerbau/testcode/test.txt"]
         }
+
     ]
 }

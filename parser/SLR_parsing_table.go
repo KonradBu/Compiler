@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"compiler/deprecated/automata"
 	"errors"
 	"fmt"
 )
@@ -21,33 +22,39 @@ type GoTo struct {
 }
 
 func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Table {
+	automata.addId()
 	table := makeSlrParsingTable()
 
-	for _, item := range automata.items {
-		for _, rule := range item.rules {
-			dot := item.dots[&rule]
+	for _, state := range automata.states {
+		for _, itemrule := range state.rules {
+			afterdot := itemrule.rule.production[itemrule.dot]
 			switch {
-			case contains(grammar.nonTerminals, rule.production[dot]) != -1:
+			case contains(grammar.nonTerminals, afterdot) != -1:
 				// The dot is before a non terminal
-				// Goto from the current item with the non terminal into the item consuming the current non terminal
-				table.AddGoTo(item.id, rule.nonTerminal, item.transitions[rule.production[dot]].id)
-			case contains(grammar.terminals, rule.production[dot]) != -1:
+				// Goto from the current state with the non terminal into the state consuming the current non terminal
+				table.AddGoTo(state.id, itemrule.rule.nonTerminal, state.transitions[afterdot].id)
+			case contains(grammar.terminals, afterdot) != -1:
 				// The dot is before a terminal
-				next := rule.production[dot]
-				table.AddAction(item.id, rule.production[dot], "Shift", item.transitions[next].id)
-			case len(rule.production) == dot:
+				table.AddAction(state.id, afterdot, "Shift", state.transitions[afterdot].id)
+			case len(itemrule.rule.production) == itemrule.dot:
 				// The dot is at the end of the production
-				for _, terminal := range grammar.follow[rule.nonTerminal] {
+				for _, terminal := range grammar.follow[itemrule.rule.nonTerminal] {
 					if terminal == "$" {
-						table.AddAction(item.id, "$", "Accept", 0)
+						table.AddAction(state.id, "$", "Accept", 0)
 					} else {
-						table.AddAction(item.id, terminal, "Reduce", item.transitions[rule.nonTerminal].id)
+						table.AddAction(state.id, terminal, "Reduce", state.transitions[itemrule.rule.nonTerminal].id)
 					}
 				}
 			}
 		}
 	}
 	return table
+}
+
+func (automata *SLR_automata) addId(){
+	for i, state := range automata.states{
+		state.id = i
+	}
 }
 
 func makeSlrParsingTable() *SLR_parsing_Table {
@@ -57,16 +64,16 @@ func makeSlrParsingTable() *SLR_parsing_Table {
 	return newTable
 }
 
-func (table *SLR_parsing_Table) GetAction(item int, symbol string) (Action, error) {
-	if table.actionTable[item][symbol] != nil {
-		return *table.actionTable[item][symbol], nil
+func (table *SLR_parsing_Table) GetAction(state int, symbol string) (Action, error) {
+	if table.actionTable[state][symbol] != nil {
+		return *table.actionTable[state][symbol], nil
 	}
 	return Action{}, errors.New("Could not get next Action")
 }
 
-func (table *SLR_parsing_Table) GetGoto(item int, symbol string) (GoTo, error) {
-	if table.gotoToTable[item][symbol] != nil {
-		return *table.gotoToTable[item][symbol], nil
+func (table *SLR_parsing_Table) GetGoto(state int, symbol string) (GoTo, error) {
+	if table.gotoToTable[state][symbol] != nil {
+		return *table.gotoToTable[state][symbol], nil
 	}
 	return GoTo{}, errors.New("Could not get next Goto")
 }
@@ -130,12 +137,12 @@ func (table *SLR_parsing_Table) PrintTable() {
 	}
 }
 
-func (table SLR_parsing_Table) getNextExpectedTokens(item int) string {
+func (table SLR_parsing_Table) getNextExpectedTokens(state int) string {
 	retString := ""
-	for i := range table.actionTable[item] {
+	for i := range table.actionTable[state] {
 		retString += " " + i
 	}
-	for i := range table.gotoToTable[item] {
+	for i := range table.gotoToTable[state] {
 		retString += " " + i
 	}
 	return retString
