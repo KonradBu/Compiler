@@ -14,12 +14,12 @@ type Grammar struct {
 	closure      map[string][]Rule
 }
 
-/*type GrammarFollow struct{
-	nullable map[string]bool
-	first map[string][]string
-	follow map[string][]string
-}
-
+/*
+	type GrammarFollow struct{
+		nullable map[string]bool
+		first map[string][]string
+		follow map[string][]string
+	}
 */
 type Rule struct {
 	nonTerminal string
@@ -147,11 +147,11 @@ func (grammar *Grammar) FOLLOW(nonTerminal string, first map[string][]string) []
 	fmt.Println("FOLLOW not done")
 	switch nonTerminal {
 	case "E":
-		return []string{")", "+"}
+		return []string{")", "+", "$"}
 	case "T":
-		return []string{"+", "*", ")"}
+		return []string{"+", "*", ")", "$"}
 	case "F":
-		return []string{"+", "*", ")"}
+		return []string{"+", "*", ")", "$"}
 	default:
 		panic("Error Calculating Follow")
 	}

@@ -30,7 +30,8 @@ func Parse(path string, test bool) {
 			if accepts {
 				break
 			} else {
-				panic("File Ended. Unnexpected Symbol " + token.Identifier)
+				next := slrTable.getNextExpectedTokens(stack.pop().(int))
+				panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
 			}
 		}
 		if token.Identifier == "LINE" {
@@ -72,7 +73,7 @@ func Parse(path string, test bool) {
 	}
 	if accepts {
 		fmt.Println("Parser finished")
-		fmt.Println()
+		accept()
 	} else {
 		next := slrTable.getNextExpectedTokens(stack.pop().(int))
 		panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
@@ -98,4 +99,15 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	fmt.Println("Table: ")
 	table.PrintTable()
 	return table, grammar
+}
+
+
+func accept(){
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("###############")
+	fmt.Println()
+	fmt.Println("ACCEPTED")
+	fmt.Println()
+	fmt.Println("###############")
 }

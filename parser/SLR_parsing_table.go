@@ -25,16 +25,10 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 
 	for _, state := range automata.states {
 		for _, itemrule := range state.rules {
-			afterdot := itemrule.rule.production[itemrule.dot]
-			switch {
-			case contains(grammar.nonTerminals, afterdot) != -1:
-				// The dot is before a non terminal
-				// Goto from the current state with the non terminal into the state consuming the current non terminal
-				table.AddGoTo(state.id, itemrule.rule.nonTerminal, state.transitions[afterdot])
-			case contains(grammar.terminals, afterdot) != -1:
-				// The dot is before a terminal
-				table.AddAction(state.id, afterdot, "Shift", state.transitions[afterdot])
-			case len(itemrule.rule.production) == itemrule.dot:
+			var afterdot string
+			if itemrule.dot < len(itemrule.rule.production) {
+				afterdot = itemrule.rule.production[itemrule.dot]
+			} else {
 				// The dot is at the end of the production
 				for _, terminal := range grammar.follow[itemrule.rule.nonTerminal] {
 					if terminal == "$" {
@@ -44,15 +38,18 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 					}
 				}
 			}
+			switch {
+			case contains(grammar.nonTerminals, afterdot) != -1:
+				// The dot is before a non terminal
+				// Goto from the current state with the non terminal into the state consuming the current non terminal
+				table.AddGoTo(state.id, itemrule.rule.nonTerminal, state.transitions[afterdot])
+			case contains(grammar.terminals, afterdot) != -1:
+				// The dot is before a terminal
+				table.AddAction(state.id, afterdot, "Shift", state.transitions[afterdot])
+			}
 		}
 	}
 	return table
-}
-
-func (automata *SLR_automata) addId() {
-	for i := range automata.states {
-		automata.states[i].id = i
-	}
 }
 
 func makeSlrParsingTable() *SLR_parsing_Table {
@@ -105,7 +102,8 @@ func (table *SLR_parsing_Table) AddGoTo(state int, symbol string, newstate int) 
 		table.gotoToTable[state] = make(map[string]*GoTo)
 	}
 	if table.gotoToTable[state][symbol] != nil {
-		panic("Grammar does not seem to be SLR Parsable, GoTo Table error")
+		// TODO Panic Here
+		fmt.Println("Grammar does not seem to be SLR Parsable, GoTo Table error")
 	}
 	table.gotoToTable[state][symbol] = MakeGoto(newstate)
 }
@@ -115,10 +113,12 @@ func (table *SLR_parsing_Table) PrintTable() {
 	for i, m := range table.actionTable {
 		fmt.Print(i)
 		for str, action := range m {
-			fmt.Print(str + " ")
-			fmt.Print(action.actionType + " ")
-			fmt.Print(action.value)
-			fmt.Print(" ")
+			if str == "$" {
+				fmt.Print(str + " ")
+				fmt.Print(action.actionType + " ")
+				fmt.Print(action.value)
+				fmt.Print(" ")
+			}
 		}
 		fmt.Println()
 	}
