@@ -146,6 +146,8 @@ func (grammar *Grammar) FOLLOW(nonTerminal string, first map[string][]string) []
 
 	fmt.Println("FOLLOW not done")
 	switch nonTerminal {
+	case "S":
+		return []string{"$"}
 	case "E":
 		return []string{")", "+", "$"}
 	case "T":

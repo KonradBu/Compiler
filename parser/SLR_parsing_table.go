@@ -43,7 +43,7 @@ func (automata *SLR_automata) CreateSLRTable(grammar *Grammar) *SLR_parsing_Tabl
 			case contains(grammar.nonTerminals, afterdot) != -1:
 				// The dot is before a non terminal
 				// Goto from the current state with the non terminal into the state consuming the current non terminal
-				table.AddGoTo(state.id, itemrule.rule.nonTerminal, state.transitions[afterdot])
+				table.AddGoTo(state.id, afterdot, state.transitions[afterdot])
 			case contains(grammar.terminals, afterdot) != -1:
 				// The dot is before a terminal
 				table.AddAction(state.id, afterdot, "Shift", state.transitions[afterdot])
@@ -86,7 +86,7 @@ func (table *SLR_parsing_Table) AddAction(state int, terminal string, actionType
 	if table.actionTable[state] == nil {
 		table.actionTable[state] = make(map[string]*Action)
 	}
-	if table.actionTable[state][terminal] != nil {
+	if table.actionTable[state][terminal] != nil && table.actionTable[state][terminal].value != ActionValue {
 		panic("Grammar does not seem to be SLR Parsable, Action Table Error")
 	}
 	table.actionTable[state][terminal] = &newAction
@@ -102,9 +102,8 @@ func (table *SLR_parsing_Table) AddGoTo(state int, symbol string, newstate int) 
 	if table.gotoToTable[state] == nil {
 		table.gotoToTable[state] = make(map[string]*GoTo)
 	}
-	if table.gotoToTable[state][symbol] != nil {
-		// TODO Panic Here
-		fmt.Println("Grammar does not seem to be SLR Parsable, GoTo Table error")
+	if table.gotoToTable[state][symbol] != nil && table.gotoToTable[state][symbol].val != newstate {
+		panic("Grammar does not seem to be SLR Parsable, GoTo Table error")
 	}
 	table.gotoToTable[state][symbol] = MakeGoto(newstate)
 }
@@ -128,10 +127,11 @@ func (table *SLR_parsing_Table) PrintTable(grammar *Grammar) {
 	}
 
 	fmt.Println("GoTo: ")
-	for i, m := range table.gotoToTable {
-		fmt.Print(i)
-		for str, state := range m {
-			fmt.Print(str + " ")
+	for stateId, othermap := range table.gotoToTable {
+		fmt.Print(stateId)
+		fmt.Print(" ")
+		for symbol, state := range othermap {
+			fmt.Print(symbol + " ")
 			fmt.Print(state)
 			fmt.Print(" ")
 		}
