@@ -2,7 +2,7 @@ package lexer
 
 import (
 	"bufio"
-	"fmt"
+	//"fmt"
 	"os"
 	"strconv"
 	"unicode"
@@ -14,21 +14,17 @@ type Token struct {
 }
 
 // Runs as go routine; called by the parser
-func GetNext(tokenChannel chan Token) (*Token) {
+func GetNext(tokenChannel chan Token) *Token {
 	// Wait until the channel with tokens has a value inside
 	select {
-	case newToken, ok := <-tokenChannel:
-		// If channel is closed -> File is done
-		if !ok {
-			sendToken("END", nil, tokenChannel)  
-		}
+	case newToken:= <-tokenChannel:
 		return &newToken
 	}
 }
 
 func Lex(path string, tokenChannel chan Token) {
-	fmt.Println("Started Lexing...")
-	fmt.Println()
+	//fmt.Println("Started Lexing...")
+	//fmt.Println()
 	// Open File
 	file, err := os.Open(path)
 	if err != nil {
@@ -86,7 +82,7 @@ func Lex(path string, tokenChannel chan Token) {
 				if !isSymbol(c) {
 					tokens = append(tokens, buffer)
 					buffer = ""
-					if (!unicode.IsSpace(c)){
+					if !unicode.IsSpace(c) {
 						buffer = string(c)
 					}
 					isSymbolString = false
@@ -119,7 +115,7 @@ func Lex(path string, tokenChannel chan Token) {
 				buffer = ""
 
 			case isSymbol(c):
-				if buffer != ""{
+				if buffer != "" {
 					tokens = append(tokens, buffer)
 				}
 				isSymbolString = true
@@ -238,13 +234,13 @@ func Lex(path string, tokenChannel chan Token) {
 			}
 		}
 	}
-	sendToken("$", 0, tokenChannel)
+	sendToken("$", "$", tokenChannel)
 	close(tokenChannel)
-	fmt.Println()
-	fmt.Println("Lexer finished")
+	//fmt.Println()
+	//fmt.Println("Lexer finished")
 }
 
-func sendToken(identifier string, value any, channel chan Token){
+func sendToken(identifier string, value any, channel chan Token) {
 	// Make return token and add to channel
 	returnToken := new(Token)
 	returnToken.Identifier = identifier
