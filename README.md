@@ -1,6 +1,8 @@
 # NEON
 Compiler from a subset of C# to Jasmin Assembly
+
 For the course compiler construction at HHU Düsseldorf
+
 By Konrad Burgi
 
 
