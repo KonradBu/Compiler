@@ -93,19 +93,22 @@ func (grammar *Grammar) Augment() {
 	grammar.AddRule(newStart, []string{oldStart})
 }
 
-func (grammar *Grammar) CalcFollow() {
-	first := grammar.FIRST()
-	PrintFirst(first)
-	follow := make(map[string][]string)
-	for _, nt := range grammar.nonTerminals {
-		follow[nt] = grammar.FOLLOW(nt, first)
-	}
-	grammar.follow = follow
-}
-
 func PrintFirst(first map[string][]string){
 	fmt.Println("FIRST:")	
 	for nt, t := range first{
+		fmt.Print(nt)
+		fmt.Print(": ")
+		for _, n := range t{
+			fmt.Print(n)
+			fmt.Print(" ")
+		}
+		fmt.Println()
+	} 
+}
+
+func PrintFollow(follow map[string][]string){
+	fmt.Println("FOLLOW:")	
+	for nt, t := range follow{
 		fmt.Print(nt)
 		fmt.Print(": ")
 		for _, n := range t{

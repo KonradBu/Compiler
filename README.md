@@ -1,5 +1,5 @@
 # NEON
-Compiler from a subset of C# to Jasmin Assembly
+Compiler from a subset of C# to JVM Bytecode (Jasmin)
 
 For the course compiler construction at HHU Düsseldorf
 

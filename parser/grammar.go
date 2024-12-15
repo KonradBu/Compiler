@@ -1,7 +1,6 @@
 package parser
 
 import (
-	//"fmt"
 	"unicode"
 )
 
@@ -14,13 +13,6 @@ type Grammar struct {
 	closure      map[string][]Rule
 }
 
-/*
-	type GrammarFollow struct{
-		nullable map[string]bool
-		first map[string][]string
-		follow map[string][]string
-	}
-*/
 type Rule struct {
 	nonTerminal string
 	production  []string
@@ -84,22 +76,24 @@ func (grammar *Grammar) FIRST() map[string][]string {
 
 // Only works without epsilon and only specific kinds of left recursion ~ only with loop length == 1 :))
 func (grammar *Grammar) firstrecursive(input string, firstMap map[string][]string) {
-	if firstMap[input] == nil {
+	_, ok := firstMap[input]
+	if !ok {
 		firstMap[input] = []string{}
-	}else{
+	} else {
 		return
 	}
 	for _, r := range grammar.rules {
 		if r.nonTerminal == input {
+
 			if isNT(r.production[0]) {
 				grammar.firstrecursive(r.production[0], firstMap)
-				for _, s := range firstMap[r.production[0]]{
-					if contains(firstMap[input], s) == -1{
+				for _, s := range firstMap[r.production[0]] {
+					if contains(firstMap[input], s) == -1 {
 						firstMap[input] = append(firstMap[input], s)
 					}
 				}
 			} else {
-				if contains(firstMap[input], r.production[0]) == -1{
+				if contains(firstMap[input], r.production[0]) == -1 {
 					firstMap[input] = append(firstMap[input], r.production[0])
 				}
 			}
@@ -114,66 +108,49 @@ func (grammar *Grammar) firstrecursive(input string, firstMap map[string][]strin
 	}
 }
 
-/*
-// Does NOT deal with epsilon Transitions
-func (grammar *Grammar) SetFirst(){
-	firstMap := *new(map[string][]string)
-	nonTerminalMap := grammar.makeNonTerminalMap()
-	grammar.recursiveFirst(grammar.start, firstMap, nonTerminalMap)
-	grammar.first = firstMap
+func (grammar *Grammar) FOLLOW(first map[string][]string) map[string][]string {
+	followMap := make(map[string][]string)
+	grammar.recursiveFollow("S", followMap, first)
+	return followMap
 }
 
-// This function does not take into account non terminals that cannot be reached from the start symbol
-func (grammar *Grammar)recursiveFirst(nt string, firstMap map[string][]string){
-	nonTerminalMap := grammar.nonTerminals
-	dependancies := []string{}
-	// Create the array for this non terminal
-	firstMap[nt] = []string{}
-
-	// For every rule associated with the starting non terminal...
-	for _, rule := range nonTerminalMap[nt]{
-		// for every symbol of the start...
-		for _, prod := range rule.production{
-
-			retString := ""
-			// Is said symbol terminal??
-			for _, t := range grammar.terminals{
-				if t == prod{
-					retString = prod
-					// Breaks the loop over the terminals
-					break
+func (grammar *Grammar) recursiveFollow(input string, followMap map[string][]string, first map[string][]string) {
+	if followMap[input] == nil {
+		followMap[input] = []string{}
+	} else {
+		return
+	}
+	if input == "S" {
+		followMap[input] = []string{"$"}
+	}
+	for _, rule := range grammar.rules {
+		for i, symbol := range rule.production {
+			if symbol == input {
+				if i == len(rule.production)-1 {
+					grammar.recursiveFollow(rule.nonTerminal, followMap, first)
+					for _, newEntry := range grammar.follow[rule.nonTerminal] {
+						if contains(followMap[input], newEntry) == -1 {
+							followMap[input] = append(followMap[input], newEntry)
+						}
+					}
+				} else {
+					next := rule.production[i+1]
+					if isNT(next) {
+						for _, newEntry := range first[next] {
+							if contains(followMap[input], newEntry) == -1 {
+								followMap[input] = append(followMap[input], newEntry)
+							}
+						}
+					} else {
+						if contains(followMap[input], next) == -1 {
+							followMap[input] = append(followMap[input], next)
+						}
+					}
+				}
+				if isNT(symbol) {
+					grammar.recursiveFollow(symbol, followMap, first)
 				}
 			}
-
-			// The symbol is a terminal!
-			if retString != ""{
-				firstMap[nt] = append(firstMap[nt], retString)
-				// This breaks the loop over the production parts ~ jumps to the next rule
-				break
-			}
-
-			//If we have reached this point, the symbol has to be a non terminal
-
-			firstRec, ok := firstMap[prod]
-			if ok{
-				firstMap[nt] = firstRec
-			}else{
-				// We have not searched the non terminal yet
-				dependancies = append(dependancies, prod)
-				// We have to check the
-				grammar.recursiveFirst(prod, firstMap, nonTerminalMap)
-			}
-			break
 		}
 	}
-	// Append the first map of the dependancies
-	for _, d := range dependancies{
-		firstMap[nt] = append(firstMap[nt], firstMap[d]...)
-	}
-}
-
-*/
-
-func (grammar *Grammar) FOLLOW(nonTerminal string, first map[string][]string) []string {
-	return []string{}
 }

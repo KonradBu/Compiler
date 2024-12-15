@@ -92,7 +92,14 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	// Done
 	grammar.Augment()
 	// Not done??
-	grammar.CalcFollow()
+	first := grammar.FIRST()
+	first["S"] = append(first["S"], "namespace")
+	first["START"] = append(first["START"], "namespace")
+	fmt.Println("First bodge still in place")
+	//PrintFirst(first)
+	follow := grammar.FOLLOW(first)
+	PrintFollow(follow)
+	grammar.follow = follow
 	// Done
 	grammar.CalcClosure()
 	// Done

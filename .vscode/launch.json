@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}",
-            "args": ["-compile", "/home/konradburgi/Documents/hhu/gitCode/compilerbau/testcode/test.txt"]
+            "args": ["-compile", "C:/Users/konki/Dokumente/Documents/Compilerbau/Neon/testcode/HelloWorld.cs"]
         }
 
     ]
