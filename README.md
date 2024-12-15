@@ -1,12 +1,12 @@
-#### Compiler
+# NEON
 Compiler from a subset of C# to Jasmin Assembly
 For the course compiler construction at HHU Düsseldorf
 By Konrad Burgi
 
 
-#### How to run and compile
+## How to run and compile
 Build:
-go build main.go
+go build neon.go
 
 Run:
 ./main -compile [filepath]
@@ -14,11 +14,10 @@ Run:
 -liveness for variable liveness analysis
 -constant for constant propogation analysis
 
-#### Info
+## Info
 Uses a SRL(0) parser
 
-#### Documentation
-##### File Explaination:
+## File Explaination:
 lexer:
 lexer.go Takes a file and generates the corresponding tokens
 
