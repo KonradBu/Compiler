@@ -145,7 +145,7 @@ func Lex(path string, tokenChannel chan Token) {
 
 			// If could be converted to int
 			if intConvErr == nil {
-				sendToken("INTEGER_LITERAL", tmpdigit, tokenChannel)
+				sendToken("integerliteral", tmpdigit, tokenChannel)
 				continue
 			}
 
@@ -153,7 +153,7 @@ func Lex(path string, tokenChannel chan Token) {
 
 			// If could be converted to bool
 			if boolConvErr == nil {
-				sendToken("BOOL_LITERAL", tmpbool, tokenChannel)
+				sendToken("boolliteral", tmpbool, tokenChannel)
 				continue
 			}
 
@@ -164,65 +164,63 @@ func Lex(path string, tokenChannel chan Token) {
 				tokenVal = strconv.Itoa(lineNumber)
 				lineNumber++
 			case "namespace":
-				identifier = "NAMESPACE"
+				identifier = "namespace"
 			case "using":
-				identifier = "USING"
+				identifier = "using"
 			case "class":
-				identifier = "CLASS"
+				identifier = "class"
 			case "void":
-				identifier = "VOID"
+				identifier = "void"
 			case "static":
-				identifier = "STATIC"
-			case "Main":
-				identifier = "MAIN"
+				identifier = "static"
 			case "int":
-				identifier = "INT"
+				identifier = "int"
 			case "bool":
-				identifier = "BOOL"
+				identifier = "bool"
 			case "string":
-				identifier = "STRING"
+				identifier = "string"
 			case "double":
-				identifier = "DOUBLE"
+				identifier = "double"
 			case "if":
-				identifier = "IF"
+				identifier = "if"
 			case "else":
-				identifier = "ELSE"
+				identifier = "else"
 			case "while":
-				identifier = "WHILE"
+				identifier = "while"
 			case "return":
-				identifier = "RETURN"
+				identifier = "return"
 			case ".":
-				identifier = "DOT"
+				identifier = "."
 			case ",":
-				identifier = "COMMA"
+				identifier = ","
 			case "|":
-				identifier = "OR"
+				identifier = "|"
 			case "=":
-				identifier = "EQUALS"
+				identifier = "="
 			case ">":
-				identifier = "BIGGER_THAN"
+				identifier = ">"
 			case "<":
-				identifier = "SMALLER_THAN"
+				identifier = "<"
 			case "+":
-				identifier = "PLUS"
+				identifier = "+"
 			case "*":
-				identifier = "STAR"
+				identifier = "*"
 			case ";":
-				identifier = "SEMICOLON"
+				identifier = ";"
 			case "{":
-				identifier = "LEFT_BRACE"
+				identifier = "{"
 			case "}":
-				identifier = "RIGHT_BRACE"
+				identifier = "}"
 			case "(":
-				identifier = "LEFT_PARENTHESIS"
+				identifier = "("
 			case ")":
-				identifier = "RIGHT_PARENTHESIS"
+				identifier = ")"
 			case "[":
-				identifier = "LEFT_BRACKET"
+				identifier = "["
 			case "]":
-				identifier = "RIGHT_BRACKET"
+				identifier = "]"
 			default:
-				identifier = "NAME"
+				identifier = "name"
 				tokenVal = token
 			}
 			if isMultiLineComment || isSingleLineComment {

@@ -49,6 +49,7 @@ func testGrammar() []Rule {
 		MakeRule("STATEMENTBLOCK", []string{"WHILE", "STATEMENTBLOCK"}),
 
 		MakeRule("INPUTBLOCK", []string{")"}),
+		MakeRule("INPUTBLOCK", []string{"string", "[", "]", "name", ")"}),
 		MakeRule("INPUTBLOCK", []string{"INPUTSTART"}),
 		MakeRule("INPUTSTART", []string{"TYPE", "name", "INPUTCONTINUED"}),
 		MakeRule("INPUTCONTINUED", []string{",", "TYPE", "name"}),
@@ -61,7 +62,7 @@ func testGrammar() []Rule {
 		MakeRule("ARGCONTINUED", []string{",", "name", "ARGCONTINUED"}),
 
 		MakeRule("FUNCCALL", []string{"name", "(", "ARGBLOCK", ")"}),
-		MakeRule("RETURN", []string{"return", "name", ";"}),
+		MakeRule("RETURN", []string{"return", "EXPRESSION", ";"}),
 		MakeRule("RETURN", []string{"return", ";"}),
 		MakeRule("VARIABLEDECLARATION", []string{"EMPTYVARIABLEDECLARATION"}),
 		MakeRule("VARIABLEDECLARATION", []string{"SETVARIABLEDECLARATION"}),

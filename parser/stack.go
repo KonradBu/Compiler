@@ -1,28 +1,42 @@
 package parser
 
-type Stack struct{
-	Val *any
-	Next *Stack
+type Stack struct {
+	Top *StackObject
 }
 
-func makeStack(item any) *Stack{
+type StackObject struct {
+	Val  any
+	Next *StackObject
+}
+
+func makeStack(item any) *Stack {
 	newStack := new(Stack)
-	newStack.Val = &item
-	newStack.Next = nil
+	newStackObject := new(StackObject)
+	newStack.Top = newStackObject
+	newStackObject.Val = &item
+	newStackObject.Next = nil
 	return newStack
 }
 
-func (stack *Stack) pop() (*Stack, any){
-	if stack.Val == nil{
-		return &Stack{}, nil
+func (stack *Stack) pop() any {
+	if stack.Top == nil {
+		return nil
 	}
-	tmp := stack.Val
-	return stack.Next, tmp
+	tmp := stack.Top.Val
+	stack.Top = stack.Top.Next
+	return tmp
 }
 
-func (stack *Stack) add(item any) *Stack{
-	newTop := new(Stack)
-	newTop.Val = &item
-	newTop.Next = stack
-	return newTop
+func (stack *Stack) add(item any) {
+	newObject := new(StackObject)
+	newObject.Val = &item
+	newObject.Next = stack.Top
+	stack.Top = newObject
+}
+
+func (stack *Stack) peek() any {
+    if stack.Top == nil {
+        return nil
+    }
+    return stack.Top.Val
 }

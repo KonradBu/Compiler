@@ -21,7 +21,6 @@ func Parse(path string, test bool) {
 	//fmt.Println("Started Parsing...")
 	linecount := 0
 
-
 	stack := makeStack(0)
 
 	accepts := false
@@ -32,7 +31,7 @@ func Parse(path string, test bool) {
 			if accepts {
 				break
 			} else {
-				_, val := stack.pop()
+				val := stack.pop()
 				next := slrTable.getNextExpectedTokens(val.(int))
 				panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
 			}
@@ -44,33 +43,34 @@ func Parse(path string, test bool) {
 
 		// Do only once, unless reduce is found
 		for i := 0; i < 1; i++ {
-			stackVal := *stack.Val
-			res, err := slrTable.GetAction(stackVal.(int), token.Value.(string))
+			stackVal := stack.peek().(*any)
+			res, err := slrTable.GetAction((*stackVal).(int), token.Identifier)
 			if err != nil {
 				lineString := strconv.Itoa(linecount)
-				panic("Parsing Error. Cannot work with the symbol: " + token.Identifier + " at line " + lineString)
+				panic(fmt.Sprintf("Parsing Error. Cannot work with the symbol: %v (type %T) at line %s", token.Identifier, token.Identifier, lineString))
+				//panic("Parsing Error. Cannot work with the symbol: " + token.Identifier + " at line " + lineString)
 			}
 			switch res.actionType {
 			case "Shift":
-				stack = stack.add(token)
-				stack = stack.add(res.value)
+				stack.add(token)
+				stack.add(res.value)
 			case "Reduce":
 				// Redo the loop ~ Dont get another input symbol
 				i--
 				// Get the Rule that we reduce by
 				reductionRule := grammar.rules[res.value]
 				for range reductionRule.production {
-					stack, _ = stack.pop()
-					stack, _ = stack.pop()
+					stack.pop()
+					stack.pop()
 				}
-				stack = stack.add(reductionRule.production)
-				stateBefore := *stack.Next.Val
-				gotoVal, err := slrTable.GetGoto(stateBefore.(int), reductionRule.nonTerminal)
+				stateBefore := stack.peek().(*any)
+				gotoVal, err := slrTable.GetGoto((*stateBefore).(int), reductionRule.nonTerminal)
 				if err != nil {
 					lineString := strconv.Itoa(linecount)
 					panic("Parsing Error. Cannot work with the symbol:  " + token.Identifier + " at line " + lineString)
 				}
-				stack = stack.add(gotoVal.val)
+				stack.add(reductionRule.nonTerminal)
+				stack.add(gotoVal.val)
 			case "Accept":
 				accepts = true
 			}
@@ -80,7 +80,7 @@ func Parse(path string, test bool) {
 		//fmt.Println("Parser finished")
 		accept()
 	} else {
-		_, val := stack.pop()
+		val := stack.pop()
 		next := slrTable.getNextExpectedTokens(val.(int))
 		panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
 	}
@@ -95,13 +95,14 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	// Not done??
 	first := grammar.FIRST()
 
+	// TODO
 	// There is something wrong with first, no time to fix it yet
 	first["S"] = append(first["S"], "namespace")
 	first["START"] = append(first["START"], "namespace")
-	fmt.Println("First bodge still in place")
+	//fmt.Println("First bodge still in place")
 	//PrintFirst(first)
 	follow := grammar.FOLLOW(first)
-	PrintFollow(follow)
+	//PrintFollow(follow)
 	grammar.follow = follow
 	// Done
 	grammar.CalcClosure()

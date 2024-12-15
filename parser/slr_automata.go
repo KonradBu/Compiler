@@ -137,7 +137,7 @@ func (oldState *State) GoTo(automata *SLR_automata, closure GrammarClosure) {
 			newState.id = stateIndex
 			stateIndex++
 			automata.states = append(automata.states, *newState)
-			if oldState.transitions[symbol] != 0{
+			if oldState.transitions[symbol] != 0 {
 				fmt.Print("Conflict in state")
 				fmt.Println(oldState.id)
 				panic("SLR automata failed")
@@ -145,6 +145,11 @@ func (oldState *State) GoTo(automata *SLR_automata, closure GrammarClosure) {
 			oldState.transitions[symbol] = newState.id
 			newState.GoTo(automata, closure)
 		} else {
+			if oldState.transitions[symbol] != 0 {
+				fmt.Print("Conflict in state")
+				fmt.Println(oldState.id)
+				panic("SLR automata failed")
+			}
 			oldState.transitions[symbol] = existingState.id
 			//fmt.Println("Deleted:")
 			//fmt.Println(newState)
