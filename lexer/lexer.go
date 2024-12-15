@@ -17,7 +17,7 @@ type Token struct {
 func GetNext(tokenChannel chan Token) *Token {
 	// Wait until the channel with tokens has a value inside
 	select {
-	case newToken:= <-tokenChannel:
+	case newToken := <-tokenChannel:
 		return &newToken
 	}
 }
@@ -245,6 +245,9 @@ func sendToken(identifier string, value any, channel chan Token) {
 	returnToken := new(Token)
 	returnToken.Identifier = identifier
 	returnToken.Value = value
+	if returnToken.Value == nil {
+		returnToken.Value = 0
+	}
 	channel <- *returnToken
 }
 

@@ -1,26 +1,83 @@
 package parser
 
-func defGrammar(test bool) []Rule{
+func defGrammar(test bool) []Rule {
 	grammar := []Rule{}
-	if test{
+	if test {
 		grammar = append(grammar, testGrammar()...)
-	}else{
+	} else {
 		grammar = append(grammar, compilerGrammar()...)
 	}
 	return grammar
 }
 
-func testGrammar() []Rule{
-	rules := []Rule{}
-	rules = append(rules, MakeRule("E", []string{"E", "+", "T"}))
-	rules = append(rules, MakeRule("E", []string{"T"}))
-	rules = append(rules, MakeRule("T", []string{"T", "*", "F"}))
-	rules = append(rules, MakeRule("T", []string{"F"}))
-	rules = append(rules, MakeRule("F", []string{"(", "E", ")"}))
-	rules = append(rules, MakeRule("F", []string{"id"}))
+func testGrammar() []Rule {
+	rules := []Rule{
+
+		// NAME, LITERALS
+		// INPUT BLOCK; ARGBLOCK
+
+		MakeRule("TYPE", []string{"double", "bool", "int", "string"}),
+		MakeRule("RETURNTYPE", []string{"void"}),
+		MakeRule("RETURNTYPE", []string{"TYPE"}),
+		MakeRule("LITERAL", []string{"stringliteral", "NUMLITERAL", "boolliteral"}),
+		MakeRule("NUMLITERAL", []string{"intliteral"}),
+		MakeRule("NUMLITERAL", []string{"intliteral", ".", "intliteral"}),
+
+		MakeRule("START", []string{"USINGBLOCK"}),
+		MakeRule("USINGBLOCK", []string{"using", "name", ";", "USINGBLOCK"}),
+		MakeRule("USINGBLOCK", []string{"NAMESPACE"}),
+		MakeRule("NAMESPACE", []string{"namespace", "name", "{", "CLASS", "}"}),
+		MakeRule("CLASS", []string{"class", "name", "{", "FUNCBLOCK"}),
+		MakeRule("FUNCBLOCK", []string{"FUNC", "FUNCBLOCK"}),
+		MakeRule("FUNCBLOCK", []string{"}"}),
+
+		MakeRule("FUNC", []string{"static", "RETURNTYPE", "name", "(", "INPUTBLOCK", "{", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"}"}),
+		MakeRule("STATEMENTBLOCK", []string{"FUNCCALL", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"RETURN", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"VARASSIGN", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"VARIABLEDECLARATION", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"IF", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"WHILE", "STATEMENTBLOCK"}),
+
+		MakeRule("INPUTBLOCK", []string{")"}),
+		MakeRule("INPUTBLOCK", []string{"INPUTSTART"}),
+		MakeRule("INPUTSTART", []string{"TYPE", "name", "INPUTCONTINUED"}),
+		MakeRule("INPUTCONTINUED", []string{",", "INPUT"}),
+		MakeRule("INPUTCONTINUED", []string{")"}),
+
+		MakeRule("ARGBLOCK", []string{")"}),
+		MakeRule("ARGBLOCK", []string{"ARGSSTART"}),
+		MakeRule("ARGSSTART", []string{"name", "ARGCONTINUED"}),
+		MakeRule("ARGCONTINUED", []string{")"}),
+		MakeRule("ARGCONTINUED", []string{",", "name", "ARGCONTINUED"}),
+
+		MakeRule("FUNCCALL", []string{"name", "(", "ARGBLOCK", ")"}),
+		MakeRule("RETURN", []string{"return", "name", ";"}),
+		MakeRule("RETURN", []string{"return", ";"}),
+		MakeRule("VARIABLEDECLARATION", []string{"EMPTYVARIABLEDECLARATION"}),
+		MakeRule("VARIABLEDECLARATION", []string{"SETVARIABLEDECLARATION"}),
+		MakeRule("EMPTYVARIABLEDECLARATION", []string{"TYPE", "name", ";"}),
+		MakeRule("SETVARIABLEDECLARATION", []string{"TYPE", "name", "=", "EXPRESSION", ";"}),
+		MakeRule("VARASSIGN", []string{"name", "=", "EXPRESSION", ";"}),
+
+		MakeRule("IF", []string{"if", "(", "EXPRESSION", ")", "{", "STATEMENTBLOCK"}),
+		MakeRule("IF", []string{"if", "(", "EXPRESSION", ")", "{", "STATEMENTBLOCK", "ELSE"}),
+		MakeRule("ELSE", []string{"else", "{", "STATEMENTBLOCK"}),
+		MakeRule("WHILE", []string{"while", "(", "EXPRESSION", ")", "{", "STATEMENTBLOCK"}),
+
+		MakeRule("EXPRESSION", []string{"EXPRESSION", "booloperator", "TERM"}),
+		MakeRule("EXPRESSION", []string{"TERM"}),
+		MakeRule("TERM", []string{"TERM", "+", "FACTOR"}),
+		MakeRule("TERM", []string{"FACTOR"}),
+		MakeRule("FACTOR", []string{"FACTOR", "+", "PRIMARY"}),
+		MakeRule("FACTOR", []string{"PRIMARY"}),
+		MakeRule("PRIMARY", []string{"FUNCCALL"}),
+		MakeRule("PRIMARY", []string{"(", "EXPRESSION", ")"}),
+	}
 	return rules
 }
 
-func compilerGrammar() []Rule{
+func compilerGrammar() []Rule {
 	return []Rule{}
 }
