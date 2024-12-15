@@ -17,7 +17,8 @@ Run:
 -constant for constant propogation analysis
 
 ## Info
-Uses a SRL(0) parser
+Uses go 1.23.2 
+Implements a SRL(0) parser from scratch
 
 ## File Explaination:
 lexer:
