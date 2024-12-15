@@ -31,13 +31,15 @@ func Parse(path string, test bool) {
 			if accepts {
 				break
 			} else {
-				val := stack.pop()
-				next := slrTable.getNextExpectedTokens(val.(int))
-				panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
+				parseError(*token, linecount, *stack, slrTable)
 			}
 		}
 		if token.Identifier == "LINE" {
-			linecount++
+			var err error
+			linecount, err = strconv.Atoi(token.Value.(string))
+			if err != nil {
+				panic("Parser Error, Linecount is not int")
+			}
 			continue
 		}
 
@@ -46,9 +48,7 @@ func Parse(path string, test bool) {
 			stackVal := stack.peek().(*any)
 			res, err := slrTable.GetAction((*stackVal).(int), token.Identifier)
 			if err != nil {
-				lineString := strconv.Itoa(linecount)
-				panic(fmt.Sprintf("Parsing Error. Cannot work with the symbol: %v (type %T) at line %s", token.Identifier, token.Identifier, lineString))
-				//panic("Parsing Error. Cannot work with the symbol: " + token.Identifier + " at line " + lineString)
+				parseError(*token, linecount, *stack, slrTable)
 			}
 			switch res.actionType {
 			case "Shift":
@@ -66,8 +66,7 @@ func Parse(path string, test bool) {
 				stateBefore := stack.peek().(*any)
 				gotoVal, err := slrTable.GetGoto((*stateBefore).(int), reductionRule.nonTerminal)
 				if err != nil {
-					lineString := strconv.Itoa(linecount)
-					panic("Parsing Error. Cannot work with the symbol:  " + token.Identifier + " at line " + lineString)
+					parseError(*token, linecount, *stack, slrTable)
 				}
 				stack.add(reductionRule.nonTerminal)
 				stack.add(gotoVal.val)
@@ -80,9 +79,7 @@ func Parse(path string, test bool) {
 		//fmt.Println("Parser finished")
 		accept()
 	} else {
-		val := stack.pop()
-		next := slrTable.getNextExpectedTokens(val.(int))
-		panic("File ended unnexpectedly. Still waiting for tokens. Possible Token:" + next)
+		parseError(lexer.Token{}, linecount, *stack, slrTable)
 	}
 }
 
@@ -117,6 +114,31 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	return table, grammar
 }
 
+func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsing_Table) {
+	lineString := strconv.Itoa(linecount)
+	state, err := stack.pop().(int)
+	var next string
+	if !err {
+		next = table.getNextExpectedTokens(state)
+	} else {
+		next = "Lookup Failed :("
+	}
+
+	if token.Identifier == "$" {
+		panic("Enexpected end of file reached. At line: " + lineString + ". Next Tokens could sometimes be: " + next)
+	}
+	conv, err := token.Value.(int)
+	var errorVal string
+	if err && conv != 0 {
+		errorVal := fmt.Sprintf("%v", token.Value)
+		errorVal = " (" + errorVal + ") "
+		panic("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ". Next Tokens could sometimes be: " + next)
+	} else {
+		errorVal = ""
+		panic("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ". Next Tokens could sometimes be: " + next)
+	}
+}
+
 func accept() {
 	fmt.Println()
 	fmt.Println()
@@ -125,4 +147,6 @@ func accept() {
 	fmt.Println("ACCEPTED")
 	fmt.Println()
 	fmt.Println("###############")
+	fmt.Println()
+	fmt.Println()
 }

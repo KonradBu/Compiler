@@ -41,7 +41,7 @@ func testGrammar() []Rule {
 
 		MakeRule("FUNC", []string{"static", "RETURNTYPE", "name", "(", "INPUTBLOCK", "{", "STATEMENTBLOCK"}),
 		MakeRule("STATEMENTBLOCK", []string{"}"}),
-		MakeRule("STATEMENTBLOCK", []string{"FUNCCALL", "STATEMENTBLOCK"}),
+		MakeRule("STATEMENTBLOCK", []string{"FUNCCALL", ";", "STATEMENTBLOCK"}),
 		MakeRule("STATEMENTBLOCK", []string{"RETURN", "STATEMENTBLOCK"}),
 		MakeRule("STATEMENTBLOCK", []string{"VARASSIGN", "STATEMENTBLOCK"}),
 		MakeRule("STATEMENTBLOCK", []string{"VARIABLEDECLARATION", "STATEMENTBLOCK"}),
@@ -57,11 +57,12 @@ func testGrammar() []Rule {
 
 		MakeRule("ARGBLOCK", []string{")"}),
 		MakeRule("ARGBLOCK", []string{"ARGSSTART"}),
-		MakeRule("ARGSSTART", []string{"name", "ARGCONTINUED"}),
+		MakeRule("ARGSSTART", []string{"EXPRESSION", "ARGCONTINUED"}),
 		MakeRule("ARGCONTINUED", []string{")"}),
-		MakeRule("ARGCONTINUED", []string{",", "name", "ARGCONTINUED"}),
+		MakeRule("ARGCONTINUED", []string{",", "EXPRESSION", "ARGCONTINUED"}),
 
 		MakeRule("FUNCCALL", []string{"name", "(", "ARGBLOCK", ")"}),
+		MakeRule("FUNCCALL", []string{"name", ".", "name", "(", "ARGBLOCK", ")"}),
 		MakeRule("RETURN", []string{"return", "EXPRESSION", ";"}),
 		MakeRule("RETURN", []string{"return", ";"}),
 		MakeRule("VARIABLEDECLARATION", []string{"EMPTYVARIABLEDECLARATION"}),
@@ -76,7 +77,6 @@ func testGrammar() []Rule {
 		MakeRule("WHILE", []string{"while", "(", "EXPRESSION", ")", "{", "STATEMENTBLOCK"}),
 
 		MakeRule("EXPRESSION", []string{"EXPRESSION", "booloperator", "TERM"}),
-		MakeRule("EXPRESSION", []string{"name"}),
 		MakeRule("EXPRESSION", []string{"TERM"}),
 		MakeRule("TERM", []string{"TERM", "+", "FACTOR"}),
 		MakeRule("TERM", []string{"FACTOR"}),

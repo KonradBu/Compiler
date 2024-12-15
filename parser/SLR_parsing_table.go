@@ -87,7 +87,7 @@ func (table *SLR_parsing_Table) AddAction(state int, terminal string, actionType
 		table.actionTable[state] = make(map[string]*Action)
 	}
 	if table.actionTable[state][terminal] != nil && table.actionTable[state][terminal].value != ActionValue {
-		//fmt.Println("Grammar does not seem to be SLR Parsable, Action Table Error")
+		fmt.Println("Grammar does not seem to be SLR Parsable, Action Table Error")
 	}
 	table.actionTable[state][terminal] = &newAction
 }
@@ -141,11 +141,16 @@ func (table *SLR_parsing_Table) PrintTable(grammar *Grammar) {
 
 func (table SLR_parsing_Table) getNextExpectedTokens(state int) string {
 	retString := ""
-	for i := range table.actionTable[state] {
-		retString += " " + i
+	for s := range table.actionTable[state] {
+		if table.actionTable[state][s] != nil{
+			retString += " " + s
+		}
+		
 	}
 	for i := range table.gotoToTable[state] {
-		retString += " " + i
+		if table.actionTable[state][i] != nil{
+			retString += " " + i
+		}
 	}
 	return retString
 }
