@@ -79,7 +79,7 @@ func testGrammar() []Rule {
 		MakeRule("EXPRESSION", []string{"TERM"}),
 		MakeRule("TERM", []string{"TERM", "+", "FACTOR"}),
 		MakeRule("TERM", []string{"FACTOR"}),
-		MakeRule("FACTOR", []string{"FACTOR", "+", "PRIMARY"}),
+		MakeRule("FACTOR", []string{"FACTOR", "*", "PRIMARY"}),
 		MakeRule("FACTOR", []string{"PRIMARY"}),
 		MakeRule("PRIMARY", []string{"FUNCCALL"}),
 		MakeRule("PRIMARY", []string{"LITERAL"}),

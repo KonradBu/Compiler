@@ -110,25 +110,34 @@ func (grammar *Grammar) firstrecursive(input string, firstMap map[string][]strin
 
 func (grammar *Grammar) FOLLOW(first map[string][]string) map[string][]string {
 	followMap := make(map[string][]string)
-	grammar.recursiveFollow("S", followMap, first)
+	grammar.recursiveFollow("START", followMap, first)
+	for _, nt := range grammar.nonTerminals {
+		grammar.recursiveFollow(nt, followMap, first)
+	}
 	return followMap
 }
 
+// Right recursion
+// Normal follow one jump upwards
 func (grammar *Grammar) recursiveFollow(input string, followMap map[string][]string, first map[string][]string) {
-	if followMap[input] == nil {
+	if input == "S" {
+		followMap["S"] = []string{"$"}
+		return
+	}
+	_, ok := followMap[input]
+	if !ok {
 		followMap[input] = []string{}
 	} else {
 		return
-	}
-	if input == "S" {
-		followMap[input] = []string{"$"}
 	}
 	for _, rule := range grammar.rules {
 		for i, symbol := range rule.production {
 			if symbol == input {
 				if i == len(rule.production)-1 {
-					grammar.recursiveFollow(rule.nonTerminal, followMap, first)
-					for _, newEntry := range grammar.follow[rule.nonTerminal] {
+					if rule.nonTerminal != input {
+						grammar.recursiveFollow(rule.nonTerminal, followMap, first)
+					}
+					for _, newEntry := range followMap[rule.nonTerminal] {
 						if contains(followMap[input], newEntry) == -1 {
 							followMap[input] = append(followMap[input], newEntry)
 						}
@@ -146,9 +155,6 @@ func (grammar *Grammar) recursiveFollow(input string, followMap map[string][]str
 							followMap[input] = append(followMap[input], next)
 						}
 					}
-				}
-				if isNT(symbol) {
-					grammar.recursiveFollow(symbol, followMap, first)
 				}
 			}
 		}

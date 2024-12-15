@@ -14,12 +14,13 @@ type ParseTree struct {
 func Parse(path string, test bool) {
 
 	tokenChannel := make(chan lexer.Token)
+	slrTable, grammar := createParser(test)
+
 	go lexer.Lex(path, tokenChannel)
 
 	//fmt.Println("Started Parsing...")
 	linecount := 0
 
-	slrTable, grammar := createParser(test)
 
 	stack := makeStack(0)
 
@@ -93,6 +94,8 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	grammar.Augment()
 	// Not done??
 	first := grammar.FIRST()
+
+	// There is something wrong with first, no time to fix it yet
 	first["S"] = append(first["S"], "namespace")
 	first["START"] = append(first["START"], "namespace")
 	fmt.Println("First bodge still in place")
