@@ -76,9 +76,42 @@ func isNT(input string) bool {
 	return true
 }
 
-func (grammar *Grammar) FIRST(nonTerminal string) []string {
-	// TODO: CALC FIRST
-	return []string{"id", "("}
+func (grammar *Grammar) FIRST() map[string][]string {
+	firstMap := make(map[string][]string)
+	grammar.firstrecursive(grammar.start, firstMap)
+	return firstMap
+}
+
+// Only works without epsilon and only specific kinds of left recursion ~ only with loop length == 1 :))
+func (grammar *Grammar) firstrecursive(input string, firstMap map[string][]string) {
+	if firstMap[input] == nil {
+		firstMap[input] = []string{}
+	}else{
+		return
+	}
+	for _, r := range grammar.rules {
+		if r.nonTerminal == input {
+			if isNT(r.production[0]) {
+				grammar.firstrecursive(r.production[0], firstMap)
+				for _, s := range firstMap[r.production[0]]{
+					if contains(firstMap[input], s) == -1{
+						firstMap[input] = append(firstMap[input], s)
+					}
+				}
+			} else {
+				if contains(firstMap[input], r.production[0]) == -1{
+					firstMap[input] = append(firstMap[input], r.production[0])
+				}
+			}
+		}
+		for _, p := range r.production {
+			if isNT(p) {
+				if p != r.nonTerminal {
+					grammar.firstrecursive(p, firstMap)
+				}
+			}
+		}
+	}
 }
 
 /*

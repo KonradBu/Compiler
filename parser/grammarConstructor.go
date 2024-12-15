@@ -16,10 +16,18 @@ func testGrammar() []Rule {
 		// NAME, LITERALS
 		// INPUT BLOCK; ARGBLOCK
 
-		MakeRule("TYPE", []string{"double", "bool", "int", "string"}),
+		//
+		MakeRule("TYPE", []string{"double"}),
+		MakeRule("TYPE", []string{"int"}),
+		MakeRule("TYPE", []string{"string"}),
+		MakeRule("TYPE", []string{"bool"}),
+		//
 		MakeRule("RETURNTYPE", []string{"void"}),
 		MakeRule("RETURNTYPE", []string{"TYPE"}),
-		MakeRule("LITERAL", []string{"stringliteral", "NUMLITERAL", "boolliteral"}),
+		//
+		MakeRule("LITERAL", []string{"stringliteral"}),
+		MakeRule("LITERAL", []string{"boolliteral"}),
+		MakeRule("LITERAL", []string{"NUMLITERAL"}),
 		MakeRule("NUMLITERAL", []string{"intliteral"}),
 		MakeRule("NUMLITERAL", []string{"intliteral", ".", "intliteral"}),
 
@@ -43,7 +51,7 @@ func testGrammar() []Rule {
 		MakeRule("INPUTBLOCK", []string{")"}),
 		MakeRule("INPUTBLOCK", []string{"INPUTSTART"}),
 		MakeRule("INPUTSTART", []string{"TYPE", "name", "INPUTCONTINUED"}),
-		MakeRule("INPUTCONTINUED", []string{",", "INPUT"}),
+		MakeRule("INPUTCONTINUED", []string{",", "TYPE", "name"}),
 		MakeRule("INPUTCONTINUED", []string{")"}),
 
 		MakeRule("ARGBLOCK", []string{")"}),
@@ -67,12 +75,15 @@ func testGrammar() []Rule {
 		MakeRule("WHILE", []string{"while", "(", "EXPRESSION", ")", "{", "STATEMENTBLOCK"}),
 
 		MakeRule("EXPRESSION", []string{"EXPRESSION", "booloperator", "TERM"}),
+		MakeRule("EXPRESSION", []string{"name"}),
 		MakeRule("EXPRESSION", []string{"TERM"}),
 		MakeRule("TERM", []string{"TERM", "+", "FACTOR"}),
 		MakeRule("TERM", []string{"FACTOR"}),
 		MakeRule("FACTOR", []string{"FACTOR", "+", "PRIMARY"}),
 		MakeRule("FACTOR", []string{"PRIMARY"}),
 		MakeRule("PRIMARY", []string{"FUNCCALL"}),
+		MakeRule("PRIMARY", []string{"LITERAL"}),
+		MakeRule("PRIMARY", []string{"name"}),
 		MakeRule("PRIMARY", []string{"(", "EXPRESSION", ")"}),
 	}
 	return rules

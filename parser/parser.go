@@ -88,7 +88,7 @@ func Parse(path string, test bool) {
 func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 	// Only done for test case
 	rules := defGrammar(test)
-	grammar := MakeGrammar(rules, "E")
+	grammar := MakeGrammar(rules, "START")
 	// Done
 	grammar.Augment()
 	// Not done??
