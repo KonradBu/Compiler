@@ -12,18 +12,17 @@ func makeStack(item any) *Stack{
 	return newStack
 }
 
-func (stack *Stack) pop() any{
+func (stack *Stack) pop() (*Stack, any){
 	if stack.Val == nil{
-		return nil
+		return &Stack{}, nil
 	}
 	tmp := stack.Val
-	stack = stack.Next
-	return tmp
+	return stack.Next, tmp
 }
 
-func (stack *Stack) add(item any){
+func (stack *Stack) add(item any) *Stack{
 	newTop := new(Stack)
 	newTop.Val = &item
 	newTop.Next = stack
-	stack = newTop
+	return newTop
 }

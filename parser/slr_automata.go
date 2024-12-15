@@ -141,8 +141,8 @@ func (oldState *State) GoTo(automata *SLR_automata, closure GrammarClosure) {
 			newState.GoTo(automata, closure)
 		} else {
 			oldState.transitions[symbol] = existingState.id
-			fmt.Println("Deleted:")
-			fmt.Println(newState)
+			//fmt.Println("Deleted:")
+			//fmt.Println(newState)
 		}
 	}
 }

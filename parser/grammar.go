@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"fmt"
+	//"fmt"
 	"unicode"
 )
 
@@ -144,8 +144,10 @@ func (grammar *Grammar)recursiveFirst(nt string, firstMap map[string][]string){
 func (grammar *Grammar) FOLLOW(nonTerminal string, first map[string][]string) []string {
 	// TODO: CALC FOLLOW
 
-	fmt.Println("FOLLOW not done")
+	//fmt.Println("FOLLOW not done")
 	switch nonTerminal {
+	case "S":
+		return []string{"$"}
 	case "E":
 		return []string{")", "+", "$"}
 	case "T":

@@ -87,6 +87,7 @@ func (grammar *Grammar) Augment() {
 	oldStart := grammar.start
 	newStart := "S"
 	grammar.start = newStart
+	grammar.nonTerminals = append(grammar.nonTerminals, "S")
 	grammar.AddRule(newStart, []string{oldStart})
 }
 
@@ -113,7 +114,6 @@ func (grammar *Grammar) CalcClosure() {
 	}
 	grammar.closure = closure
 }
-
 
 func contains(arr []string, target string) int {
 	for i, a := range arr {
