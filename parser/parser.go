@@ -132,11 +132,10 @@ func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsin
 	if err && conv != 0 {
 		errorVal := fmt.Sprintf("%v", token.Value)
 		errorVal = " (" + errorVal + ") "
-		panic("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ". Next Tokens could sometimes be: " + next)
 	} else {
 		errorVal = ""
-		panic("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ". Next Tokens could sometimes be: " + next)
 	}
+	panic("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ". Next Tokens could sometimes be: " + next)
 }
 
 func accept() {

@@ -1,5 +1,10 @@
 package parser
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Stack struct {
 	Top *StackObject
 }
@@ -35,8 +40,18 @@ func (stack *Stack) add(item any) {
 }
 
 func (stack *Stack) peek() any {
-    if stack.Top == nil {
-        return nil
-    }
-    return stack.Top.Val
+	if stack.Top == nil {
+		return nil
+	}
+	return stack.Top.Val
+}
+
+func (stack *Stack) Print() string {
+	var builder strings.Builder
+	current := stack.Top
+	for current != nil {
+		fmt.Fprintf(&builder, "%v\n", current.Val)
+		current = current.Next
+	}
+	return builder.String()
 }
