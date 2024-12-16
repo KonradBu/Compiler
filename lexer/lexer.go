@@ -198,10 +198,12 @@ func Lex(path string, tokenChannel chan Token) {
 			case ">", "<", ">=", "<=", "||", "&&", "==":
 				identifier = "booloperator"
 				tokenVal = token
-			case "+":
-				identifier = "+"
-			case "*":
-				identifier = "*"
+			case "+", "-":
+				identifier = "plusoperator"
+				tokenVal = token
+			case "*", "/":
+				identifier = "timesoperator"
+				tokenVal = token
 			case ";":
 				identifier = ";"
 			case "{":
