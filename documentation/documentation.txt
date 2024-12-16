@@ -4,4 +4,4 @@ Jasmin Version: 2.4
 
 Java Version: 23.01.1
 
-Compile With: go build main.go
+Compile With: go build neon.go
