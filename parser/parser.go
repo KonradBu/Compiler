@@ -11,8 +11,7 @@ type ParseTree struct {
 	leaves     *ParseTree
 }
 
-func Parse(path string, test bool) {
-
+func Parse(path string, test bool) bool {
 	tokenChannel := make(chan lexer.Token)
 	slrTable, grammar := createParser(test)
 
@@ -38,7 +37,8 @@ func Parse(path string, test bool) {
 			var err error
 			linecount, err = strconv.Atoi(token.Value.(string))
 			if err != nil {
-				panic("Parser Error, Linecount is not int")
+				fmt.Print("Parser Error, Linecount is not int")
+				return false
 			}
 			continue
 		}
@@ -49,6 +49,7 @@ func Parse(path string, test bool) {
 			res, err := slrTable.GetAction((*stackVal).(int), token.Identifier)
 			if err != nil {
 				parseError(*token, linecount, *stack, slrTable)
+				return false
 			}
 			switch res.actionType {
 			case "Shift":
@@ -67,6 +68,7 @@ func Parse(path string, test bool) {
 				gotoVal, err := slrTable.GetGoto((*stateBefore).(int), reductionRule.nonTerminal)
 				if err != nil {
 					parseError(*token, linecount, *stack, slrTable)
+					return false
 				}
 				stack.add(reductionRule.nonTerminal)
 				stack.add(gotoVal.val)
@@ -80,7 +82,9 @@ func Parse(path string, test bool) {
 		accept()
 	} else {
 		parseError(lexer.Token{}, linecount, *stack, slrTable)
+		return false
 	}
+	return true
 }
 
 func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
@@ -125,7 +129,7 @@ func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsin
 	}
 
 	if token.Identifier == "$" {
-		panic("Enexpected end of file reached. At line: " + lineString + ". Next Tokens could sometimes be: " + next)
+		fmt.Println("Enexpected end of file reached. At line: " + lineString + ".\n Next Tokens could sometimes be: " + next)
 	}
 	conv, err := token.Value.(int)
 	var errorVal string
@@ -135,7 +139,7 @@ func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsin
 	} else {
 		errorVal = ""
 	}
-	panic("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ". Next Tokens could sometimes be: " + next)
+	fmt.Println("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ".\n Next Tokens could sometimes be: " + next)
 }
 
 func accept() {

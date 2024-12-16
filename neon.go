@@ -8,12 +8,15 @@ import (
 )
 
 func main() {
+	fmt.Println()
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide a code path and a flag")
+		fmt.Println()
 		return
 	}
 	if len(os.Args) > 3 {
 		fmt.Println("To many arguments")
+		fmt.Println()
 		return
 	}
 
@@ -25,6 +28,7 @@ func main() {
 
 	if !*compile && !*liveness && !*constants {
 		fmt.Println("Please specify what the program should do. Use -help if needed")
+		fmt.Println()
 		return
 	}
 
@@ -33,21 +37,29 @@ func main() {
 	if *compile {
 		if len(os.Args) != 3 {
 			fmt.Println("No path provided")
+			fmt.Println()
 			return
 		}
-		path = os.Args[0]
-		fmt.Println("Parsing...")
+		path = os.Args[2]
 		// Send code to tokenizer
-		parser.Parse(path, true)
+		parsingSuccesful := parser.Parse(path, true)
+		fmt.Println()
+
+		if !parsingSuccesful{
+			return
+		}
+
 	}
 
 	if *liveness {
 		fmt.Println("Not implemented")
+		fmt.Println()
 		return
 	}
 
 	if *constants {
 		fmt.Println("Not implemented")
+		fmt.Println()
 		return
 	}
 }
