@@ -145,7 +145,7 @@ func Lex(path string, tokenChannel chan Token) {
 
 			// If could be converted to int
 			if intConvErr == nil {
-				sendToken("integerliteral", tmpdigit, tokenChannel)
+				sendToken("intliteral", tmpdigit, tokenChannel)
 				continue
 			}
 
@@ -193,14 +193,11 @@ func Lex(path string, tokenChannel chan Token) {
 				identifier = "."
 			case ",":
 				identifier = ","
-			case "|":
-				identifier = "|"
 			case "=":
 				identifier = "="
-			case ">":
-				identifier = ">"
-			case "<":
-				identifier = "<"
+			case ">", "<", ">=", "<=", "||", "&&", "==":
+				identifier = "booloperator"
+				tokenVal = token
 			case "+":
 				identifier = "+"
 			case "*":
