@@ -25,7 +25,7 @@ using System;
 namespace  FibonacciRecursive
 {
     class Program{
-        static void Main (string []args){
+        static  Main (string []args){
             Console.WriteLine(Fib(5));
             Console.WriteLine(Fib(10));
         }
@@ -38,7 +38,7 @@ namespace  FibonacciRecursive
                     return Fib (n - 1) + Fib(n - 2);
                 }
             } else{
-                return 0;
+                return;
             }
         }
     }

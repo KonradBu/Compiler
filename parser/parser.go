@@ -120,26 +120,46 @@ func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
 
 func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsing_Table) {
 	lineString := strconv.Itoa(linecount)
-	state, err := stack.pop().(int)
-	var next string
-	if !err {
-		next = table.getNextExpectedTokens(state)
-	} else {
-		next = "Lookup Failed :("
+	state := stack.peek().(*any)
+	next := table.getNextExpectedTokens((*state).(int))
+
+	conv, err := token.Value.(int)
+	if err && conv != 0 {
+		next = append(next, fmt.Sprintf("%v", token.Value))
 	}
 
+	nextString := formatNext(next)
+
 	if token.Identifier == "$" {
-		fmt.Println("Enexpected end of file reached. At line: " + lineString + ".\n Next Tokens could sometimes be: " + next)
+		fmt.Println("Unexpected end of file reached. At line: " + lineString + ".\nExpecting: " + nextString)
+		return
 	}
-	conv, err := token.Value.(int)
-	var errorVal string
-	if err && conv != 0 {
-		errorVal := fmt.Sprintf("%v", token.Value)
-		errorVal = " (" + errorVal + ") "
-	} else {
-		errorVal = ""
+	fmt.Println("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + "\" at line " + lineString + ".\nExpecting: " + nextString)
+}
+
+func formatNext(next []string) string {
+	returnstring := ""
+	for _, n := range next {
+		nextString := ""
+		switch n {
+		case "booloperator":
+			nextString = "==, ||, &&, >=, <=, =="
+		case "timesoperator":
+			nextString = "*, /"
+		case "plusoperator":
+			nextString = "+, -"
+		case "name":
+			// Nothing :)
+		case "intliteral":
+			nextString = "num"
+		case "boolliteral":
+			nextString = "bool"
+		default:
+			nextString = n
+		}
+		returnstring += nextString + "," + " "
 	}
-	fmt.Println("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + errorVal + "\" at line " + lineString + ".\n Next Tokens could sometimes be: " + next)
+	return returnstring[:len(returnstring)-2]
 }
 
 func accept() {

@@ -139,17 +139,17 @@ func (table *SLR_parsing_Table) PrintTable(grammar *Grammar) {
 	}
 }
 
-func (table SLR_parsing_Table) getNextExpectedTokens(state int) string {
-	retString := ""
+func (table SLR_parsing_Table) getNextExpectedTokens(state int) []string {
+	retString := []string{}
 	for s := range table.actionTable[state] {
 		if table.actionTable[state][s] != nil{
-			retString += " " + s
+			retString = append(retString, s)
 		}
 		
 	}
 	for i := range table.gotoToTable[state] {
 		if table.actionTable[state][i] != nil{
-			retString += " " + i
+			retString = append(retString, i)
 		}
 	}
 	return retString
