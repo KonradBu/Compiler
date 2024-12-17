@@ -1,12 +1,14 @@
+
 # NEON
+
 Compiler from a subset of C# to JVM Bytecode (Jasmin)
 
 For the course compiler construction at HHU Düsseldorf
 
 By Konrad Burgi
 
-
 ## How to run and compile
+
 Build:
 go build neon.go
 
@@ -17,10 +19,12 @@ Run:
 -constant for constant propogation analysis
 
 ## Info
-Uses go 1.23.2 
+
+Uses go 1.23.2
 Implements a SRL(0) parser from scratch
 
-## File Explaination:
+## File Explaination
+
 lexer:
 lexer.go Takes a file and generates the corresponding tokens
 
@@ -38,3 +42,5 @@ slr_automata.go defines the SLR Automata and functions for its constructions
 slr_parsing_table.go defines the parsing table and utility functions, including taking the SLR automata and transforming it into the table
 
 stack.go provides a stack for parsing with the parsing table
+
+parseTree.go constructs a parse tree for the program
