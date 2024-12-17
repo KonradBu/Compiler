@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}",
-            "args": ["-compile", "C:/Users/konki/Dokumente/Documents/Compilerbau/Neon/testcode/features.cs"]
+            "args": ["-compile", "C:/Users/konki/Dokumente/Documents/Compilerbau/Neon/testcode/FibonacciRecursive.cs"]
         }
 
     ]

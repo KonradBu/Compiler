@@ -25,7 +25,7 @@ using System;
 namespace  FibonacciRecursive
 {
     class Program{
-        static  Main (string []args){
+        static void Main (string []args){
             Console.WriteLine(Fib(5));
             Console.WriteLine(Fib(10));
         }

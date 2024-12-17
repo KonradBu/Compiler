@@ -42,13 +42,14 @@ func main() {
 		}
 		path = os.Args[2]
 		// Send code to tokenizer
-		parsingSuccesful := parser.Parse(path, true)
+		_, parsingSuccesful := parser.Parse(path, true)
 		fmt.Println()
 
 		if !parsingSuccesful{
 			return
 		}
 
+		
 	}
 
 	if *liveness {

@@ -11,18 +11,37 @@ type ParseTree struct {
 	leaves     *ParseTree
 }
 
-func Parse(path string, test bool) bool {
+func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
+	rules := defGrammar(test)
+	grammar := MakeGrammar(rules, "START")
+	grammar.Augment()
+	first := grammar.FIRST()
+	first["S"] = append(first["S"], "namespace") // TODO
+	first["START"] = append(first["START"], "namespace")
+	follow := grammar.FOLLOW(first)
+	grammar.follow = follow
+	grammar.CalcClosure()
+
+	automata := grammar.CreateSLRAutomata()
+	table := automata.CreateSLRTable(grammar)
+	
+	return table, grammar
+}
+
+func Parse(path string, test bool) (parseTree, bool) {
+	
+	parseTreeChannel := make(chan any)
+	go createParseTree(parseTreeChannel)
+
 	tokenChannel := make(chan lexer.Token)
 	slrTable, grammar := createParser(test)
 
 	go lexer.Lex(path, tokenChannel)
 
-	//fmt.Println("Started Parsing...")
 	linecount := 0
-
 	stack := makeStack(0)
-
 	accepts := false
+
 	for true {
 		token := lexer.GetNext(tokenChannel)
 
@@ -30,16 +49,11 @@ func Parse(path string, test bool) bool {
 			if accepts {
 				break
 			} else {
-				parseError(*token, linecount, *stack, slrTable)
+				parseError(*token, linecount, *stack, slrTable, parseTreeChannel)
 			}
 		}
 		if token.Identifier == "LINE" {
-			var err error
-			linecount, err = strconv.Atoi(token.Value.(string))
-			if err != nil {
-				fmt.Print("Parser Error, Linecount is not int")
-				return false
-			}
+			linecount, _ = strconv.Atoi(token.Value.(string))
 			continue
 		}
 
@@ -48,11 +62,12 @@ func Parse(path string, test bool) bool {
 			stackVal := stack.peek().(*any)
 			res, err := slrTable.GetAction((*stackVal).(int), token.Identifier)
 			if err != nil {
-				parseError(*token, linecount, *stack, slrTable)
-				return false
+				parseError(*token, linecount, *stack, slrTable, parseTreeChannel)
+				return parseTree{}, false
 			}
 			switch res.actionType {
 			case "Shift":
+				parseTreeChannel <- *token
 				stack.add(token)
 				stack.add(res.value)
 			case "Reduce":
@@ -60,6 +75,7 @@ func Parse(path string, test bool) bool {
 				i--
 				// Get the Rule that we reduce by
 				reductionRule := grammar.rules[res.value]
+				parseTreeChannel <- reductionRule
 				for range reductionRule.production {
 					stack.pop()
 					stack.pop()
@@ -67,8 +83,8 @@ func Parse(path string, test bool) bool {
 				stateBefore := stack.peek().(*any)
 				gotoVal, err := slrTable.GetGoto((*stateBefore).(int), reductionRule.nonTerminal)
 				if err != nil {
-					parseError(*token, linecount, *stack, slrTable)
-					return false
+					parseError(*token, linecount, *stack, slrTable, parseTreeChannel)
+					return parseTree{}, false
 				}
 				stack.add(reductionRule.nonTerminal)
 				stack.add(gotoVal.val)
@@ -78,47 +94,24 @@ func Parse(path string, test bool) bool {
 		}
 	}
 	if accepts {
-		//fmt.Println("Parser finished")
-		accept()
+		parseTreeChannel <- true
+		fmt.Println("Code passed parser")
+		select {
+		case tree := <- parseTreeChannel:
+			PrintTree(tree.(parseTree))
+			return tree.(parseTree), true
+		}
 	} else {
-		parseError(lexer.Token{}, linecount, *stack, slrTable)
-		return false
+		parseError(lexer.Token{}, linecount, *stack, slrTable, parseTreeChannel)
+		return parseTree{}, false
 	}
-	return true
 }
 
-func createParser(test bool) (*SLR_parsing_Table, *Grammar) {
-	// Only done for test case
-	rules := defGrammar(test)
-	grammar := MakeGrammar(rules, "START")
-	// Done
-	grammar.Augment()
-	// Not done??
-	first := grammar.FIRST()
 
-	// TODO
-	// There is something wrong with first, no time to fix it yet
-	first["S"] = append(first["S"], "namespace")
-	first["START"] = append(first["START"], "namespace")
-	//fmt.Println("First bodge still in place")
-	//PrintFirst(first)
-	follow := grammar.FOLLOW(first)
-	//PrintFollow(follow)
-	grammar.follow = follow
-	// Done
-	grammar.CalcClosure()
-	// Done
-	//fmt.Println(grammar.closure)
-	automata := grammar.CreateSLRAutomata()
-	//automata.Print()
-	// Done
-	table := automata.CreateSLRTable(grammar)
-	//fmt.Println("Table: ")
-	//table.PrintTable(grammar)
-	return table, grammar
-}
 
-func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsing_Table) {
+func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsing_Table, donechan chan any) {
+	donechan <- false
+	
 	lineString := strconv.Itoa(linecount)
 	state := stack.peek().(*any)
 	next := table.getNextExpectedTokens((*state).(int))
@@ -176,16 +169,4 @@ func formatToken(token lexer.Token) string {
 	default:
 		return token.Identifier
 	}
-}
-
-func accept() {
-	fmt.Println()
-	fmt.Println()
-	fmt.Println("###############")
-	fmt.Println()
-	fmt.Println("ACCEPTED")
-	fmt.Println()
-	fmt.Println("###############")
-	fmt.Println()
-	fmt.Println()
 }
