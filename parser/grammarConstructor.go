@@ -76,15 +76,17 @@ func testGrammar() []Rule {
 		MakeRule("ELSE", []string{"else", "{", "STATEMENTBLOCK"}),
 		MakeRule("WHILE", []string{"while", "(", "EXPRESSION", ")", "{", "STATEMENTBLOCK"}),
 
-		MakeRule("EXPRESSION", []string{"EXPRESSION", "booloperator", "TERM"}),
+		MakeRule("EXPRESSION", []string{"EXPRESSION", "logicaloperator", "TERM"}),
+		//MakeRule("EXPRESSION", []string{"!", "EXPRESSION"}),
 		MakeRule("EXPRESSION", []string{"TERM"}),
-		MakeRule("TERM", []string{"TERM", "plusoperator", "FACTOR"}),
+		MakeRule("TERM", []string{"TERM", "unaryoperator", "FACTOR"}),
 		MakeRule("TERM", []string{"FACTOR"}),
-		MakeRule("FACTOR", []string{"FACTOR", "timesoperator", "PRIMARY"}),
+		MakeRule("FACTOR", []string{"FACTOR", "multoperator", "PRIMARY"}),
 		MakeRule("FACTOR", []string{"PRIMARY"}),
 		MakeRule("PRIMARY", []string{"FUNCCALL"}),
 		MakeRule("PRIMARY", []string{"LITERAL"}),
 		MakeRule("PRIMARY", []string{"name"}),
+		MakeRule("PRIMARY", []string{"unaryoperator", "PRIMARY"}),
 		MakeRule("PRIMARY", []string{"(", "EXPRESSION", ")"}),
 	}
 	return rules

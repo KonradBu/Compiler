@@ -134,7 +134,9 @@ func parseError(token lexer.Token, linecount int, stack Stack, table *SLR_parsin
 		fmt.Println("Unexpected end of file reached. At line: " + lineString + ".\nExpecting: " + nextString)
 		return
 	}
-	fmt.Println("Parsing Error. Cannot work with the symbol: \"" + token.Identifier + "\" at line " + lineString + ".\nExpecting: " + nextString)
+	unexpected := formatToken(token)
+
+	fmt.Println("Syntax Error. Unexpected: \"" + unexpected + "\" at line " + lineString + ".\nExpecting: " + nextString)
 }
 
 func formatNext(next []string) string {
@@ -142,11 +144,11 @@ func formatNext(next []string) string {
 	for _, n := range next {
 		nextString := ""
 		switch n {
-		case "booloperator":
+		case "logicaloperator":
 			nextString = "==, ||, &&, >=, <=, =="
-		case "timesoperator":
+		case "multoperator":
 			nextString = "*, /"
-		case "plusoperator":
+		case "unaryoperator":
 			nextString = "+, -"
 		case "name":
 			// Nothing :)
@@ -158,8 +160,22 @@ func formatNext(next []string) string {
 			nextString = n
 		}
 		returnstring += nextString + "," + " "
+		nextString = ""
 	}
 	return returnstring[:len(returnstring)-2]
+}
+
+func formatToken(token lexer.Token) string {
+	switch token.Identifier {
+	case "name", "logicaloperator", "multoperator", "unaryoperator", "boolliteral":
+		return token.Value.(string)
+	case "intliteral":
+		return strconv.Itoa(token.Value.(int))
+	case "stringliteral":
+		return "string"
+	default:
+		return token.Identifier
+	}
 }
 
 func accept() {

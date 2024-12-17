@@ -195,14 +195,14 @@ func Lex(path string, tokenChannel chan Token) {
 				identifier = ","
 			case "=":
 				identifier = "="
-			case ">", "<", ">=", "<=", "||", "&&", "==":
-				identifier = "booloperator"
+			case ">", "<", ">=", "<=", "||", "&&", "==", "!=":
+				identifier = "logicaloperator"
 				tokenVal = token
 			case "+", "-":
-				identifier = "plusoperator"
+				identifier = "unaryoperator"
 				tokenVal = token
-			case "*", "/":
-				identifier = "timesoperator"
+			case "*", "/", "%":
+				identifier = "multoperator"
 				tokenVal = token
 			case ";":
 				identifier = ";"
@@ -249,7 +249,7 @@ func sendToken(identifier string, value any, channel chan Token) {
 }
 
 func isSymbol(r rune) bool {
-	symbols := []rune{';', '.', '-', '+', '*', '>', '<', '=', '{', '}', '(', ')', '[', ']', '|', ',', '/'}
+	symbols := []rune{';', '.', '-', '+', '*', '>', '<', '=', '{', '}', '(', ')', '[', ']', '|', ',', '/', '%', '!'}
 	for _, symbol := range symbols {
 		if r == symbol {
 			return true

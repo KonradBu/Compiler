@@ -1,17 +1,37 @@
+/*
+TODO:
+
+Modulo
+args[]
+Statische variablen
+!=
+!
+no empty declaration
+doubles im lexer? + "-" vor zahlen
+keine klammern um if / else/ while mit einer anweisung
+
+*/
 using system;
+using bba;
+using asda;
+
 namespace features{
-    public class features{
-        public static void main (string args[]){
+    class features{
+
+        /*static int i = 2;
+        static bool sada = false;
+        static string buu = ";";*/ 
+        static void main (string[] args){
             // Comments - Special Characters?
             /* Multiline
-            Comments
+            Comments+
             ! */
 
             // Literals
             int i = 1; // <- Integer
             string s = "a"; // <- String
             bool b = true; // <- Bool
-            double d = -2.345 // <- Double
+            double d = -2.345; // <- Double
 
             // Operators:
             i = 1+2;
@@ -54,8 +74,7 @@ namespace features{
             // While
             int i = 0;
             while(i < 5){
-                i++;
-                i++;
+                i = i +1;
             }
 
             // Geht auch ohne {}:
