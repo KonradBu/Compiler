@@ -4,7 +4,6 @@ TODO:
 Modulo
 args[]
 Statische variablen
-!=
 !
 no empty declaration
 doubles im lexer? + "-" vor zahlen
@@ -80,12 +79,27 @@ namespace features{
             // Geht auch ohne {}:
         
             while (i < 5)
-            i++
+            {i = a;}
             // kms
 
             // ## Methods
 
-            // Alle Methods sind static:
+
+
+            // Method Calls:
+            doFunc(1); // <- Verwirft Rückgabe Typ
+
+            int i = doFunc();
+            // Kein Polymorphismus!!
+
+            // stdout:
+            Console.WriteLine("hi");
+            // Newline
+            Console.WriteLine(doFunc(3));
+
+        }
+        
+                    // Alle Methods sind static:
             // Return Types: int/ double/ bool/ string/ void
             // args sind optional
             static void doFunc(){
@@ -100,18 +114,5 @@ namespace features{
                 }
                 // Void Function without return value
             }
-
-            // Method Calls:
-            doFunc(1); // <- Verwirft Rückgabe Typ
-
-            int i = doFunc();
-            // Kein Polymorphismus!!
-
-            // stdout:
-            Console.WriteLine("hi");
-            // Newline
-            Console.WriteLine(doFunc(3));
-
-        }
     }
 }
